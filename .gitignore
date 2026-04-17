@@ -1,26 +1,54 @@
-# Compiled class file
-*.class
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
 
-# Log file
+# =========================
+# IntelliJ / IDE
+# =========================
+.idea/
+*.iml
+out/
+
+# =========================
+# Gradle
+# =========================
+.gradle/
+build/
+
+# =========================
+# Environment
+# =========================
+.env
+
+# =========================
+# Logs
+# =========================
 *.log
 
-# BlueJ files
-*.ctxt
+# =========================
+# Java
+# =========================
+*.class
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
+# =========================
+# Package Files (불필요한 빌드 결과)
+# =========================
 *.jar
 *.war
 *.nar
 *.ear
+
+# =========================
+# Archive (굳이 필요 없음)
+# =========================
 *.zip
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# =========================
+# Crash Logs
+# =========================
 hs_err_pid*
 replay_pid*
-.idea/
-.gradle/

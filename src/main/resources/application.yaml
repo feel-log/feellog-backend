@@ -1,3 +1,26 @@
 spring:
   application:
     name: backend
+
+  datasource:
+    url: jdbc:mysql://localhost:${MYSQL_PORT}/${MYSQL_DATABASE}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate   # DB 구조랑 엔티티 일치 여부만 검사
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+  sql:
+    init:
+      mode: never   # SQL 자동 실행 막기 (Docker에서 이미 실행됨)
+
+logging:
+  level:
+    org.hibernate.SQL: debug
