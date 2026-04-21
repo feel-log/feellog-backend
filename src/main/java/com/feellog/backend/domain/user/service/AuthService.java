@@ -5,6 +5,8 @@ import com.feellog.backend.domain.user.entity.RefreshToken;
 import com.feellog.backend.domain.user.entity.User;
 import com.feellog.backend.domain.user.repository.RefreshTokenRepository;
 import com.feellog.backend.domain.user.repository.UserRepository;
+import com.feellog.backend.global.exception.BusinessException;
+import com.feellog.backend.global.exception.ErrorCode;
 import com.feellog.backend.global.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,11 +25,11 @@ public class AuthService {
     @Transactional
     public TokenResponse refresh(String refreshTokenValue) {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenValue)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 리프레시 토큰입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
         if (refreshToken.isExpired()) {
             refreshTokenRepository.delete(refreshToken);
-            throw new IllegalArgumentException("만료된 리프레시 토큰입니다.");
+            throw new BusinessException(ErrorCode.TOKEN_EXPIRED);
         }
 
         Long userId = refreshToken.getUser().getId();
@@ -42,9 +44,32 @@ public class AuthService {
     }
 
     @Transactional
+    public TokenResponse issueTokens(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        String accessToken = jwtProvider.generateAccessToken(userId);
+        String newRefreshToken = jwtProvider.generateRefreshToken(userId);
+        LocalDateTime expiresAt = LocalDateTime.now()
+                .plusSeconds(jwtProvider.getRefreshTokenExpiration() / 1000);
+
+        refreshTokenRepository.findByUser(user)
+                .ifPresentOrElse(
+                        token -> token.rotate(newRefreshToken, expiresAt),
+                        () -> refreshTokenRepository.save(RefreshToken.builder()
+                                .user(user)
+                                .token(newRefreshToken)
+                                .expiresAt(expiresAt)
+                                .build())
+                );
+
+        return new TokenResponse(accessToken, newRefreshToken);
+    }
+
+    @Transactional
     public void logout(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         refreshTokenRepository.deleteByUser(user);
     }
 }
