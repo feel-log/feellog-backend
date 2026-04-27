@@ -1,9 +1,7 @@
 package com.feellog.backend.global.config;
 
 import com.feellog.backend.global.jwt.JwtProvider;
-import com.feellog.backend.global.oauth2.CustomOAuth2UserService;
 import com.feellog.backend.global.security.JwtAuthenticationFilter;
-import com.feellog.backend.global.security.OAuth2LoginSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,8 +17,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomOAuth2UserService customOAuth2UserService;
-    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final JwtProvider jwtProvider;
 
     @Bean
@@ -30,14 +26,14 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/refresh").permitAll()
+                        .requestMatchers(
+                                "/api/v1/auth/refresh",
+                                "/api/v1/auth/kakao",
+                                "/api/v1/auth/google",
+                                "/api/v1/auth/guest"
+                        ).permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated()
-                )
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo ->
-                                userInfo.userService(customOAuth2UserService))
-                        .successHandler(oAuth2LoginSuccessHandler)
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtProvider),
                         UsernamePasswordAuthenticationFilter.class);
