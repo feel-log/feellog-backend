@@ -217,8 +217,15 @@ CREATE TABLE review_result_template
     next_action_option_id BIGINT NOT NULL,
 
     title VARCHAR(150) NOT NULL,
+    summary_text TEXT NOT NULL,
+
+    feedback_title VARCHAR(150) NOT NULL,
     feedback_text TEXT NOT NULL,
-    guide_text TEXT,
+
+    guide_title VARCHAR(150) NOT NULL,
+    guide_item_1 VARCHAR(255) NOT NULL,
+    guide_item_2 VARCHAR(255) NOT NULL,
+    guide_item_3 VARCHAR(255) NOT NULL,
 
     priority INT NOT NULL DEFAULT 1,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -261,9 +268,16 @@ CREATE TABLE review
 
     review_result_template_id BIGINT,
 
-    title VARCHAR(150),
-    feedback_text TEXT,
-    guide_text TEXT,
+    title VARCHAR(150) NOT NULL,
+    summary_text TEXT NOT NULL,
+
+    feedback_title VARCHAR(150) NOT NULL,
+    feedback_text TEXT NOT NULL,
+
+    guide_title VARCHAR(150) NOT NULL,
+    guide_item_1 VARCHAR(255) NOT NULL,
+    guide_item_2 VARCHAR(255) NOT NULL,
+    guide_item_3 VARCHAR(255) NOT NULL,
 
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,

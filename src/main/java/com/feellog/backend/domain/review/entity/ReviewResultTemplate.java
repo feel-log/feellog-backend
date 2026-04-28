@@ -34,11 +34,26 @@ public class ReviewResultTemplate {
     @Column(nullable = false)
     private String title;
 
+    @Column(name = "summary_text", nullable = false, columnDefinition = "TEXT")
+    private String summaryText;
+
+    @Column(name = "feedback_title", nullable = false)
+    private String feedbackTitle;
+
     @Column(name = "feedback_text", nullable = false, columnDefinition = "TEXT")
     private String feedbackText;
 
-    @Column(name = "guide_text", nullable = false, columnDefinition = "TEXT")
-    private String guideText;
+    @Column(name = "guide_title", nullable = false)
+    private String guideTitle;
+
+    @Column(name = "guide_item_1", nullable = false)
+    private String guideItem1;
+
+    @Column(name = "guide_item_2", nullable = false)
+    private String guideItem2;
+
+    @Column(name = "guide_item_3", nullable = false)
+    private String guideItem3;
 
     private Integer priority;
 

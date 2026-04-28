@@ -58,11 +58,26 @@ public class Review {
     @Column(nullable = false)
     private String title;
 
+    @Column(name = "summary_text", nullable = false, columnDefinition = "TEXT")
+    private String summaryText;
+
+    @Column(name = "feedback_title", nullable = false)
+    private String feedbackTitle;
+
     @Column(name = "feedback_text", nullable = false, columnDefinition = "TEXT")
     private String feedbackText;
 
-    @Column(name = "guide_text", nullable = false, columnDefinition = "TEXT")
-    private String guideText;
+    @Column(name = "guide_title", nullable = false)
+    private String guideTitle;
+
+    @Column(name = "guide_item_1", nullable = false)
+    private String guideItem1;
+
+    @Column(name = "guide_item_2", nullable = false)
+    private String guideItem2;
+
+    @Column(name = "guide_item_3", nullable = false)
+    private String guideItem3;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -79,8 +94,13 @@ public class Review {
             ReviewChoiceOption nextActionOption,
             ReviewResultTemplate reviewResultTemplate,
             String title,
+            String summaryText,
+            String feedbackTitle,
             String feedbackText,
-            String guideText
+            String guideTitle,
+            String guideItem1,
+            String guideItem2,
+            String guideItem3
     ) {
         this.userId = userId;
         this.reviewDate = reviewDate;
@@ -90,8 +110,13 @@ public class Review {
         this.nextActionOption = nextActionOption;
         this.reviewResultTemplate = reviewResultTemplate;
         this.title = title;
+        this.summaryText = summaryText;
+        this.feedbackTitle = feedbackTitle;
         this.feedbackText = feedbackText;
-        this.guideText = guideText;
+        this.guideTitle = guideTitle;
+        this.guideItem1 = guideItem1;
+        this.guideItem2 = guideItem2;
+        this.guideItem3 = guideItem3;
     }
 
     public static Review create(
@@ -103,8 +128,13 @@ public class Review {
             ReviewChoiceOption nextActionOption,
             ReviewResultTemplate reviewResultTemplate,
             String title,
+            String summaryText,
+            String feedbackTitle,
             String feedbackText,
-            String guideText
+            String guideTitle,
+            String guideItem1,
+            String guideItem2,
+            String guideItem3
     ) {
         return new Review(
                 userId,
@@ -115,8 +145,13 @@ public class Review {
                 nextActionOption,
                 reviewResultTemplate,
                 title,
+                summaryText,
+                feedbackTitle,
                 feedbackText,
-                guideText
+                guideTitle,
+                guideItem1,
+                guideItem2,
+                guideItem3
         );
     }
 
