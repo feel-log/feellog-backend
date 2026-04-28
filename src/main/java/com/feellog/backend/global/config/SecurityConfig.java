@@ -33,11 +33,6 @@ public class SecurityConfig {
                                 "/api/v1/auth/guest"
                         ).permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                        /*
-                         현재 개발 단계에서 테스트 위해서 아래 부분 permitAll() 해두었습니다..
-                         API 완성 후에 삭제하겠습니다. - 박장한
-                        */
-                        .requestMatchers("/api/v1/reviews/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtProvider),
