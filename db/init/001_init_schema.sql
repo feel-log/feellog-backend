@@ -6,6 +6,9 @@ SET NAMES utf8mb4;
 SET
 FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS review;
+DROP TABLE IF EXISTS review_result_template;
+DROP TABLE IF EXISTS review_choice_option;
 DROP TABLE IF EXISTS expense_situation_tag;
 DROP TABLE IF EXISTS expense_emotion;
 DROP TABLE IF EXISTS expense;
@@ -162,4 +165,112 @@ CREATE TABLE expense_situation_tag
     CONSTRAINT fk_expense_situation_tag
         FOREIGN KEY (situation_tag_id)
             REFERENCES situation_tag (situation_tag_id)
+);
+
+-- =========================================================
+-- REVIEW CHOICE OPTION
+-- =========================================================
+CREATE TABLE review_choice_option
+(
+    review_choice_option_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    question_type           VARCHAR(50)  NOT NULL,
+    option_text             VARCHAR(255) NOT NULL,
+    option_value            VARCHAR(100) NOT NULL,
+    score                   INT,
+    sort_order              INT          NOT NULL DEFAULT 0,
+    is_active               BOOLEAN      NOT NULL DEFAULT TRUE,
+    created_at              DATETIME     NOT NULL,
+    updated_at              DATETIME     NOT NULL
+);
+
+-- =========================================================
+-- REVIEW RESULT TEMPLATE
+-- =========================================================
+CREATE TABLE review_result_template
+(
+    review_result_template_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+
+    emotion_id BIGINT NOT NULL,
+    situation_tag_id BIGINT NOT NULL,
+    satisfaction_option_id BIGINT NOT NULL,
+    next_action_option_id BIGINT NOT NULL,
+
+    title VARCHAR(150) NOT NULL,
+    feedback_text TEXT NOT NULL,
+    guide_text TEXT,
+
+    priority INT NOT NULL DEFAULT 1,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+
+    CONSTRAINT uq_review_result_template
+        UNIQUE (emotion_id, situation_tag_id, satisfaction_option_id, next_action_option_id),
+
+    CONSTRAINT fk_review_template_emotion
+        FOREIGN KEY (emotion_id)
+            REFERENCES emotion (emotion_id),
+
+    CONSTRAINT fk_review_template_situation
+        FOREIGN KEY (situation_tag_id)
+            REFERENCES situation_tag (situation_tag_id),
+
+    CONSTRAINT fk_review_template_satisfaction
+        FOREIGN KEY (satisfaction_option_id)
+            REFERENCES review_choice_option (review_choice_option_id),
+
+    CONSTRAINT fk_review_template_next_action
+        FOREIGN KEY (next_action_option_id)
+            REFERENCES review_choice_option (review_choice_option_id)
+);
+
+-- =========================================================
+-- REVIEW
+-- =========================================================
+CREATE TABLE review
+(
+    review_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    review_date DATE NOT NULL,
+
+    emotion_id BIGINT NOT NULL,
+    situation_tag_id BIGINT NOT NULL,
+    satisfaction_option_id BIGINT NOT NULL,
+    next_action_option_id BIGINT NOT NULL,
+
+    review_result_template_id BIGINT,
+
+    title VARCHAR(150),
+    feedback_text TEXT,
+    guide_text TEXT,
+
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+
+    CONSTRAINT uq_review_user_date
+        UNIQUE (user_id, review_date),
+
+    CONSTRAINT fk_review_user
+        FOREIGN KEY (user_id)
+            REFERENCES users (user_id),
+
+    CONSTRAINT fk_review_emotion
+        FOREIGN KEY (emotion_id)
+            REFERENCES emotion (emotion_id),
+
+    CONSTRAINT fk_review_situation
+        FOREIGN KEY (situation_tag_id)
+            REFERENCES situation_tag (situation_tag_id),
+
+    CONSTRAINT fk_review_satisfaction
+        FOREIGN KEY (satisfaction_option_id)
+            REFERENCES review_choice_option (review_choice_option_id),
+
+    CONSTRAINT fk_review_next_action
+        FOREIGN KEY (next_action_option_id)
+            REFERENCES review_choice_option (review_choice_option_id),
+
+    CONSTRAINT fk_review_result_template
+        FOREIGN KEY (review_result_template_id)
+            REFERENCES review_result_template (review_result_template_id)
 );
