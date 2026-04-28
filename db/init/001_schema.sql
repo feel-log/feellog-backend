@@ -17,6 +17,7 @@ DROP TABLE IF EXISTS emotion;
 DROP TABLE IF EXISTS emotion_group;
 DROP TABLE IF EXISTS category;
 DROP TABLE IF EXISTS category_group;
+DROP TABLE IF EXISTS refresh_tokens;
 DROP TABLE IF EXISTS users;
 
 SET
@@ -41,6 +42,26 @@ CREATE TABLE users
     deleted_at       DATETIME,
     CONSTRAINT uq_provider_user UNIQUE (provider, provider_user_id),
     CONSTRAINT uq_email UNIQUE (email)
+);
+
+-- 👇 바로 여기 추가
+-- =========================================================
+-- REFRESH TOKENS
+-- =========================================================
+CREATE TABLE refresh_tokens
+(
+    refresh_token_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    token VARCHAR(512) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL,
+
+    CONSTRAINT uq_refresh_token_user UNIQUE (user_id),
+    CONSTRAINT uq_refresh_token UNIQUE (token),
+
+    CONSTRAINT fk_refresh_token_user
+        FOREIGN KEY (user_id)
+            REFERENCES users (user_id)
 );
 
 -- =========================================================
