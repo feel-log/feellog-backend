@@ -37,6 +37,11 @@ public class AuthController {
         return ResponseEntity.ok(authService.refresh(request.refreshToken()));
     }
 
+    @PostMapping("/guest")
+    public ResponseEntity<TokenResponse> guestLogin() {
+        return ResponseEntity.ok(socialAuthService.guestLogin());
+    }
+
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@AuthenticationPrincipal Long userId) {
         authService.logout(userId);
