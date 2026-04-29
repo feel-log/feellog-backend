@@ -1,6 +1,5 @@
 package com.feellog.backend.domain.catalog.emotion.entity;
 
-import com.feellog.backend.global.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -10,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "emotion")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Emotion extends BaseTimeEntity {
+public class Emotion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
