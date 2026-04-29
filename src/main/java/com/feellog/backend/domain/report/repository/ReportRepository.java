@@ -1,7 +1,6 @@
 package com.feellog.backend.domain.report.repository;
 
 import com.feellog.backend.domain.expense.entity.Expense;
-import com.feellog.backend.domain.income.entity.Income;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

@@ -1,4 +1,4 @@
-package com.feellog.backend.domain.income.entity;
+package com.feellog.backend.domain.asset.entity;
 
 import com.feellog.backend.domain.user.entity.User;
 import jakarta.persistence.*;
@@ -13,12 +13,12 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "income")
-public class Income {
+@Table(name = "asset")
+public class Asset {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "income_id")
+    @Column(name = "asset_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -26,14 +26,14 @@ public class Income {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "income_category_id", nullable = false)
-    private IncomeCategory incomeCategory;
+    @JoinColumn(name = "asset_category_id", nullable = false)
+    private AssetCategory assetCategory;
 
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;
 
     @Column(nullable = false)
-    private LocalDate incomeDate;
+    private LocalDate assetDate;
 
     @Column(columnDefinition = "TEXT")
     private String memo;

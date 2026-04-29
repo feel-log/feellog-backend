@@ -1,7 +1,8 @@
 package com.feellog.backend.domain.review.entity;
 
-import com.feellog.backend.domain.catalog.emotion.entity.Emotion;
-import com.feellog.backend.domain.catalog.situationtag.entity.SituationTag;
+import com.feellog.backend.domain.emotion.entity.Emotion;
+import com.feellog.backend.domain.situationtag.entity.SituationTag;
+import com.feellog.backend.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -10,16 +11,13 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
 @Table(
         name = "review",
         uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_review_user_date",
-                        columnNames = {"user_id", "review_date"}
-                )
+                @UniqueConstraint(name = "uq_review_user_date", columnNames = {"user_id", "review_date"})
         }
 )
 public class Review {
@@ -29,10 +27,11 @@ public class Review {
     @Column(name = "review_id")
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Column(name = "review_date", nullable = false)
+    @Column(nullable = false)
     private LocalDate reviewDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -55,72 +54,38 @@ public class Review {
     @JoinColumn(name = "review_result_template_id")
     private ReviewResultTemplate reviewResultTemplate;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 150)
     private String title;
 
-    @Column(name = "summary_text", nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String summaryText;
 
-    @Column(name = "feedback_title", nullable = false)
+    @Column(nullable = false, length = 150)
     private String feedbackTitle;
 
-    @Column(name = "feedback_text", nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String feedbackText;
 
-    @Column(name = "guide_title", nullable = false)
+    @Column(nullable = false, length = 150)
     private String guideTitle;
 
-    @Column(name = "guide_item_1", nullable = false)
+    @Column(name = "guide_item_1", nullable = false, length = 255)
     private String guideItem1;
 
-    @Column(name = "guide_item_2", nullable = false)
+    @Column(name = "guide_item_2", nullable = false, length = 255)
     private String guideItem2;
 
-    @Column(name = "guide_item_3", nullable = false)
+    @Column(name = "guide_item_3", nullable = false, length = 255)
     private String guideItem3;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    private Review(
-            Long userId,
-            LocalDate reviewDate,
-            Emotion emotion,
-            SituationTag situationTag,
-            ReviewChoiceOption satisfactionOption,
-            ReviewChoiceOption nextActionOption,
-            ReviewResultTemplate reviewResultTemplate,
-            String title,
-            String summaryText,
-            String feedbackTitle,
-            String feedbackText,
-            String guideTitle,
-            String guideItem1,
-            String guideItem2,
-            String guideItem3
-    ) {
-        this.userId = userId;
-        this.reviewDate = reviewDate;
-        this.emotion = emotion;
-        this.situationTag = situationTag;
-        this.satisfactionOption = satisfactionOption;
-        this.nextActionOption = nextActionOption;
-        this.reviewResultTemplate = reviewResultTemplate;
-        this.title = title;
-        this.summaryText = summaryText;
-        this.feedbackTitle = feedbackTitle;
-        this.feedbackText = feedbackText;
-        this.guideTitle = guideTitle;
-        this.guideItem1 = guideItem1;
-        this.guideItem2 = guideItem2;
-        this.guideItem3 = guideItem3;
-    }
-
     public static Review create(
-            Long userId,
+            User user,
             LocalDate reviewDate,
             Emotion emotion,
             SituationTag situationTag,
@@ -136,34 +101,29 @@ public class Review {
             String guideItem2,
             String guideItem3
     ) {
-        return new Review(
-                userId,
-                reviewDate,
-                emotion,
-                situationTag,
-                satisfactionOption,
-                nextActionOption,
-                reviewResultTemplate,
-                title,
-                summaryText,
-                feedbackTitle,
-                feedbackText,
-                guideTitle,
-                guideItem1,
-                guideItem2,
-                guideItem3
-        );
-    }
+        Review review = new Review();
 
-    @PrePersist
-    public void prePersist() {
+        review.user = user;
+        review.reviewDate = reviewDate;
+        review.emotion = emotion;
+        review.situationTag = situationTag;
+        review.satisfactionOption = satisfactionOption;
+        review.nextActionOption = nextActionOption;
+        review.reviewResultTemplate = reviewResultTemplate;
+
+        review.title = title;
+        review.summaryText = summaryText;
+        review.feedbackTitle = feedbackTitle;
+        review.feedbackText = feedbackText;
+        review.guideTitle = guideTitle;
+        review.guideItem1 = guideItem1;
+        review.guideItem2 = guideItem2;
+        review.guideItem3 = guideItem3;
+
         LocalDateTime now = LocalDateTime.now();
-        this.createdAt = now;
-        this.updatedAt = now;
-    }
+        review.createdAt = now;
+        review.updatedAt = now;
 
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        return review;
     }
 }

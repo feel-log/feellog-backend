@@ -5,10 +5,12 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Entity
-@Table(name = "review_choice_option")
+import java.time.LocalDateTime;
+
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
+@Table(name = "review_choice_option")
 public class ReviewChoiceOption {
 
     @Id
@@ -16,21 +18,26 @@ public class ReviewChoiceOption {
     @Column(name = "review_choice_option_id")
     private Long id;
 
-    @Column(name = "question_type", nullable = false, length = 50)
+    @Column(nullable = false, length = 50)
     private String questionType;
 
-    @Column(name = "option_text", nullable = false, length = 255)
+    @Column(nullable = false, length = 255)
     private String optionText;
 
-    @Column(name = "option_value", nullable = false, length = 100)
+    @Column(nullable = false, length = 100)
     private String optionValue;
 
-    @Column
     private Integer score;
 
-    @Column(name = "sort_order", nullable = false)
-    private Integer sortOrder;
+    @Column(nullable = false)
+    private Integer sortOrder = 0;
 
-    @Column(name = "is_active", nullable = false)
-    private Boolean isActive;
+    @Column(nullable = false)
+    private Boolean isActive = true;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
 }

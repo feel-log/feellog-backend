@@ -1,6 +1,6 @@
 package com.feellog.backend.domain.expense.entity;
 
-import com.feellog.backend.domain.catalog.emotion.entity.Emotion;
+import com.feellog.backend.domain.emotion.entity.Emotion;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -8,10 +8,18 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "expense_emotion")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
+@Table(
+        name = "expense_emotion",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uq_expense_emotion",
+                        columnNames = {"expense_id", "emotion_id"}
+                )
+        }
+)
 public class ExpenseEmotion {
 
     @Id
@@ -27,11 +35,6 @@ public class ExpenseEmotion {
     @JoinColumn(name = "emotion_id", nullable = false)
     private Emotion emotion;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(nullable = false)
     private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
 }
