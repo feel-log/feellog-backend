@@ -1,10 +1,9 @@
 package com.feellog.backend.domain.review.service;
 
-import com.feellog.backend.domain.catalog.emotion.entity.Emotion;
+import com.feellog.backend.domain.emotion.entity.Emotion;
+import com.feellog.backend.domain.emotion.repository.EmotionRepository;
 import com.feellog.backend.domain.review.dto.response.ReviewDetailResponse;
-import com.feellog.backend.domain.review.repository.EmotionRepository;
-import com.feellog.backend.domain.catalog.situationtag.entity.SituationTag;
-import com.feellog.backend.domain.review.repository.SituationTagRepository;
+import com.feellog.backend.domain.situationtag.entity.SituationTag;
 import com.feellog.backend.domain.review.dto.ReviewOptionsResponse;
 import com.feellog.backend.domain.review.dto.request.ReviewCreateRequest;
 import com.feellog.backend.domain.review.dto.response.ReviewCreateResponse;
@@ -14,6 +13,10 @@ import com.feellog.backend.domain.review.entity.ReviewResultTemplate;
 import com.feellog.backend.domain.review.repository.ReviewChoiceOptionRepository;
 import com.feellog.backend.domain.review.repository.ReviewRepository;
 import com.feellog.backend.domain.review.repository.ReviewResultTemplateRepository;
+import com.feellog.backend.domain.situationtag.repository.SituationTagRepository;
+import com.feellog.backend.domain.user.entity.User;
+import com.feellog.backend.domain.user.entity.UserStatus;
+import com.feellog.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +34,8 @@ public class ReviewService {
     private final ReviewChoiceOptionRepository reviewChoiceOptionRepository;
     private final ReviewResultTemplateRepository reviewResultTemplateRepository;
     private final ReviewRepository reviewRepository;
+
+    private final UserRepository userRepository;
 
     public ReviewOptionsResponse getReviewOptions() {
         return new ReviewOptionsResponse(
@@ -101,8 +106,11 @@ public class ReviewService {
                 ? template.getGuideItem3()
                 : "하루 뒤에도 필요한지 다시 생각해보기";
 
+        User user = userRepository.findByIdAndStatus(userId, UserStatus.ACTIVE)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
         Review review = Review.create(
-                userId,
+                user,
                 request.reviewDate(),
                 emotion,
                 situationTag,

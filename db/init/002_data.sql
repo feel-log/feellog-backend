@@ -41,6 +41,40 @@ VALUES (1, '식비', NOW(), NOW()),
        (4, '문화생활', NOW(), NOW());
 
 -- =========================================================
+-- PAYMENT METHOD
+-- =========================================================
+INSERT INTO payment_method (name, created_at, updated_at)
+VALUES ('카드', NOW(), NOW()),
+       ('현금', NOW(), NOW()),
+       ('계좌', NOW(), NOW()),
+       ('기타', NOW(), NOW());
+
+-- =========================================================
+-- INCOME CATEGORY
+-- =========================================================
+INSERT INTO income_category (name, created_at, updated_at)
+VALUES ('급여', NOW(), NOW()),
+       ('용돈', NOW(), NOW()),
+       ('부수입', NOW(), NOW()),
+       ('상여금', NOW(), NOW()),
+       ('금융', NOW(), NOW()),
+       ('수입', NOW(), NOW()),
+       ('기타', NOW(), NOW());
+
+-- =========================================================
+-- ASSET CATEGORY
+-- income_category와 독립적으로 관리
+-- =========================================================
+INSERT INTO asset_category (name, created_at, updated_at)
+VALUES ('급여', NOW(), NOW()),
+       ('용돈', NOW(), NOW()),
+       ('부수입', NOW(), NOW()),
+       ('상여금', NOW(), NOW()),
+       ('금융', NOW(), NOW()),
+       ('수입', NOW(), NOW()),
+       ('기타', NOW(), NOW());
+
+-- =========================================================
 -- EMOTION GROUP
 -- =========================================================
 INSERT INTO emotion_group (name, created_at, updated_at)
@@ -95,11 +129,11 @@ INSERT INTO review_choice_option
 (question_type, option_text, option_value, score, sort_order, is_active, created_at, updated_at)
 VALUES
 -- 소비 만족도 5단계
-('SATISFACTION', '매우 만족했어요', 'VERY_SATISFIED', 5, 1, TRUE, NOW(), NOW()),
-('SATISFACTION', '만족했어요', 'SATISFIED', 4, 2, TRUE, NOW(), NOW()),
-('SATISFACTION', '보통이었어요', 'NORMAL', 3, 3, TRUE, NOW(), NOW()),
-('SATISFACTION', '아쉬웠어요', 'UNSATISFIED', 2, 4, TRUE, NOW(), NOW()),
-('SATISFACTION', '많이 아쉬웠어요', 'VERY_UNSATISFIED', 1, 5, TRUE, NOW(), NOW()),
+('SATISFACTION', '매우 만족스럽다', 'VERY_SATISFIED', 5, 1, TRUE, NOW(), NOW()),
+('SATISFACTION', '만족스럽다', 'SATISFIED', 4, 2, TRUE, NOW(), NOW()),
+('SATISFACTION', '보통이다', 'NORMAL', 3, 3, TRUE, NOW(), NOW()),
+('SATISFACTION', '아쉽다', 'UNSATISFIED', 2, 4, TRUE, NOW(), NOW()),
+('SATISFACTION', '매우 아쉽다', 'VERY_UNSATISFIED', 1, 5, TRUE, NOW(), NOW()),
 
 -- 내일 소비 계획 4단계
 ('NEXT_ACTION', '오늘처럼 유지할래요', 'KEEP', 4, 1, TRUE, NOW(), NOW()),
