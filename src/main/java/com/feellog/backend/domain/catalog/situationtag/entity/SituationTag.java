@@ -1,6 +1,5 @@
 package com.feellog.backend.domain.catalog.situationtag.entity;
 
-import com.feellog.backend.global.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -10,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "situation_tag")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class SituationTag extends BaseTimeEntity {
+public class SituationTag {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

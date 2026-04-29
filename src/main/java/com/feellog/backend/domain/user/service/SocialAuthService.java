@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -40,6 +42,21 @@ public class SocialAuthService {
         GoogleUserInfo userInfo = googleAuthClient.getUserInfo(accessToken);
 
         return findOrCreateAndIssueTokens(Provider.GOOGLE, userInfo.id(), userInfo.email(), userInfo.name());
+    }
+
+    public TokenResponse guestLogin() {
+        String providerUserId = UUID.randomUUID().toString();
+        String suffix = providerUserId.replace("-", "").substring(0, 4).toUpperCase();
+        String nickname = "guest_" + suffix;
+
+        User user = userRepository.save(User.builder()
+                .provider(Provider.GUEST)
+                .providerUserId(providerUserId)
+                .email(null)
+                .nickname(nickname)
+                .build());
+
+        return authService.issueTokens(user.getId());
     }
 
     private TokenResponse findOrCreateAndIssueTokens(Provider provider, String providerUserId,
