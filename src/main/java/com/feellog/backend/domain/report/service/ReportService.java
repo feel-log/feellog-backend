@@ -5,7 +5,13 @@ import com.feellog.backend.domain.expense.entity.ExpenseEmotion;
 import com.feellog.backend.domain.expense.entity.ExpenseSituationTag;
 import com.feellog.backend.domain.income.entity.Income;
 import com.feellog.backend.domain.report.dto.CategoryAmountDto;
-import com.feellog.backend.domain.report.dto.response.*;
+
+import com.feellog.backend.domain.report.dto.response.CategoryStatDto;
+import com.feellog.backend.domain.report.dto.response.CommentDto;
+import com.feellog.backend.domain.report.dto.response.CommentsDto;
+import com.feellog.backend.domain.report.dto.response.EmotionStatDto;
+import com.feellog.backend.domain.report.dto.response.MonthlyReportResponse;
+import com.feellog.backend.domain.report.dto.response.SituationStatDto;
 import com.feellog.backend.domain.report.repository.IncomeReportRepository;
 import com.feellog.backend.domain.report.repository.ReportRepository;
 import lombok.RequiredArgsConstructor;
@@ -131,7 +137,11 @@ public class ReportService {
 
         // 정렬 및 순위 부여
         List<Map.Entry<Long, Long>> sorted = new ArrayList<>(categoryAmountMap.entrySet());
-        sorted.sort((a, b) -> Long.compare(b.getValue(), a.getValue()));
+        sorted.sort((a, b) -> {
+            int cmp = Long.compare(b.getValue(), a.getValue());
+            if (cmp != 0) return cmp;
+            return Long.compare(a.getKey(), b.getKey()); // 동순위 시 categoryId 오름차순
+        });
 
         List<CategoryStatDto> result = new ArrayList<>();
         int rank = 1;
@@ -174,7 +184,11 @@ public class ReportService {
         }
 
         List<Map.Entry<Long, Long>> sorted = new ArrayList<>(emotionAmountMap.entrySet());
-        sorted.sort((a, b) -> Long.compare(b.getValue(), a.getValue()));
+        sorted.sort((a, b) -> {
+            int cmp = Long.compare(b.getValue(), a.getValue());
+            if (cmp != 0) return cmp;
+            return Long.compare(a.getKey(), b.getKey()); // 동순위 시 emotionId 오름차순
+        });
 
         List<EmotionStatDto> result = new ArrayList<>();
         int rank = 1;
@@ -198,17 +212,30 @@ public class ReportService {
     private List<SituationStatDto> buildSituationStats(List<Expense> expenses) {
         Map<Long, Integer> situationCountMap = new HashMap<>();
         Map<Long, String> situationNameMap = new HashMap<>();
+        Map<Long, Long> situationAmountMap = new HashMap<>();  // 금액 집계용
 
         for (Expense expense : expenses) {
+            long amount = expense.getAmount().longValue();
             for (ExpenseSituationTag est : expense.getExpenseSituationTags()) {
                 Long tagId = est.getSituationTag().getId();
                 situationCountMap.merge(tagId, 1, Integer::sum);
                 situationNameMap.putIfAbsent(tagId, est.getSituationTag().getName());
+                situationAmountMap.merge(tagId, amount, Long::sum);  // 금액 합산
             }
         }
 
+        // 건수 내림차순 → 동순위면 금액 내림차순 → 그 다음 situationTagId 오름차순
         List<Map.Entry<Long, Integer>> sorted = new ArrayList<>(situationCountMap.entrySet());
-        sorted.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
+        sorted.sort((a, b) -> {
+            int cmp = Integer.compare(b.getValue(), a.getValue());
+            if (cmp != 0) return cmp;
+            int amountCmp = Long.compare(
+                    situationAmountMap.get(b.getKey()),
+                    situationAmountMap.get(a.getKey())
+            );
+            if (amountCmp != 0) return amountCmp;
+            return Long.compare(a.getKey(), b.getKey()); // 동순위 시 situationTagId 오름차순
+        });
 
         List<SituationStatDto> result = new ArrayList<>();
         int rank = 1;
