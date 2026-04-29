@@ -3,11 +3,29 @@ package com.feellog.backend.domain.review.entity;
 import com.feellog.backend.domain.catalog.emotion.entity.Emotion;
 import com.feellog.backend.domain.catalog.situationtag.entity.SituationTag;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-@Entity
+import java.time.LocalDateTime;
+
 @Getter
-@Table(name = "review_result_template")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
+@Table(
+        name = "review_result_template",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uq_review_result_template",
+                        columnNames = {
+                                "emotion_id",
+                                "situation_tag_id",
+                                "satisfaction_option_id",
+                                "next_action_option_id"
+                        }
+                )
+        }
+)
 public class ReviewResultTemplate {
 
     @Id
@@ -31,32 +49,39 @@ public class ReviewResultTemplate {
     @JoinColumn(name = "next_action_option_id", nullable = false)
     private ReviewChoiceOption nextActionOption;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 150)
     private String title;
 
-    @Column(name = "summary_text", nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String summaryText;
 
-    @Column(name = "feedback_title", nullable = false)
+    @Column(nullable = false, length = 150)
     private String feedbackTitle;
 
-    @Column(name = "feedback_text", nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String feedbackText;
 
-    @Column(name = "guide_title", nullable = false)
+    @Column(nullable = false, length = 150)
     private String guideTitle;
 
-    @Column(name = "guide_item_1", nullable = false)
+    @Column(name = "guide_item_1", nullable = false, length = 255)
     private String guideItem1;
 
-    @Column(name = "guide_item_2", nullable = false)
+    @Column(name = "guide_item_2", nullable = false, length = 255)
     private String guideItem2;
 
-    @Column(name = "guide_item_3", nullable = false)
+    @Column(name = "guide_item_3", nullable = false, length = 255)
     private String guideItem3;
 
-    private Integer priority;
+    @Column(nullable = false)
+    private Integer priority = 1;
 
-    @Column(name = "is_active", nullable = false)
-    private Boolean isActive;
+    @Column(nullable = false)
+    private Boolean isActive = true;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
 }

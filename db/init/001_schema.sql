@@ -47,7 +47,6 @@ CREATE TABLE users
     birth_date       DATE,
     gender           VARCHAR(20),
     status           VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
-    fcm_token        VARCHAR(255),
     last_login_at    DATETIME,
     created_at       DATETIME     NOT NULL,
     updated_at       DATETIME     NOT NULL,
