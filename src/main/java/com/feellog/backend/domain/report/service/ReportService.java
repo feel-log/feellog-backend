@@ -4,6 +4,7 @@ import com.feellog.backend.domain.expense.entity.Expense;
 import com.feellog.backend.domain.expense.entity.ExpenseEmotion;
 import com.feellog.backend.domain.expense.entity.ExpenseSituationTag;
 import com.feellog.backend.domain.income.entity.Income;
+import com.feellog.backend.domain.report.dto.CategoryAmountDto;
 import com.feellog.backend.domain.report.dto.response.*;
 import com.feellog.backend.domain.report.repository.IncomeReportRepository;
 import com.feellog.backend.domain.report.repository.ReportRepository;
@@ -15,7 +16,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,9 +43,9 @@ public class ReportService {
         LocalDate prevStartDate = prevYearMonth.atDay(1);
         LocalDate prevEndDate = prevYearMonth.atEndOfMonth();
 
-        // 당월/전월 지출 조회
+        // 당월 지출 / 전월 카테고리 지출
         List<Expense> currentExpenses = reportRepository.findExpensesByUserAndPeriod(userId, startDate, endDate);
-        List<Expense> prevExpenses = reportRepository.findExpensesByUserAndPeriod(userId, prevStartDate, prevEndDate);
+        List<CategoryAmountDto> prevCategoryAmounts = reportRepository.findCategoryAmountByUserAndPeriod(userId, prevStartDate, prevEndDate);
 
         // 당월 수입 조회
         List<Income> currentIncomes = incomeReportRepository.findIncomesByUserAndPeriod(userId, startDate, endDate);
@@ -55,20 +60,6 @@ public class ReportService {
                 .mapToLong(e -> e.getAmount().longValue())
                 .sum();
 
-        long prevTotalExpense = prevExpenses.stream()
-                .mapToLong(e -> e.getAmount().longValue())
-                .sum();
-
-        // 전월 대비 증감
-        Long diffAmount = null;
-        Double diffRate = null;
-        if (!prevExpenses.isEmpty() && prevTotalExpense > 0) {
-            diffAmount = totalExpense - prevTotalExpense;
-            diffRate = BigDecimal.valueOf((double) diffAmount / prevTotalExpense * 100)
-                    .setScale(1, RoundingMode.HALF_UP)
-                    .doubleValue();
-        }
-
         // 카테고리별 집계
         List<CategoryStatDto> categoryList = buildCategoryStats(currentExpenses, totalExpense);
 
@@ -79,7 +70,7 @@ public class ReportService {
         List<SituationStatDto> situationList = buildSituationStats(currentExpenses);
 
         // 문구 생성
-        CommentsDto comments = buildComments(categoryList, emotionList, situationList, prevExpenses);
+        CommentsDto comments = buildComments(categoryList, emotionList, situationList, prevCategoryAmounts);
 
         return MonthlyReportResponse.builder()
                 .period(MonthlyReportResponse.PeriodDto.builder()
@@ -89,8 +80,6 @@ public class ReportService {
                 .summary(MonthlyReportResponse.SummaryDto.builder()
                         .totalIncome(totalIncome)
                         .totalExpense(totalExpense)
-                        .diffAmount(diffAmount)
-                        .diffRate(diffRate)
                         .build())
                 .comments(comments)
                 .categories(MonthlyReportResponse.CategoriesDto.builder()
@@ -108,35 +97,36 @@ public class ReportService {
     private List<CategoryStatDto> buildCategoryStats(List<Expense> expenses, long totalExpense) {
         if (totalExpense == 0) return Collections.emptyList();
 
-        // 카테고리별 합산
-        Map<Long, Long> categoryAmountMap = expenses.stream()
-                .collect(Collectors.groupingBy(
-                        e -> e.getCategory().getId(),
-                        Collectors.summingLong(e -> e.getAmount().longValue())
-                ));
+        Map<Long, Expense> categorySampleMap = new HashMap<>();
+        Map<Long, Long> categoryAmountMap = new HashMap<>();
 
-        List<Long> categoryIds = new ArrayList<>(categoryAmountMap.keySet());
+        for (Expense e : expenses) {
+            Long categoryId = e.getCategory().getId();
+            categorySampleMap.putIfAbsent(categoryId, e);
+            categoryAmountMap.merge(categoryId, e.getAmount().longValue(), Long::sum);
+        }
 
-        // 비율 계산
-        List<double[]> rawRates = categoryIds.stream()
-                .map(id -> {
-                    double rate = (double) categoryAmountMap.get(id) / totalExpense * 100;
-                    return new double[]{rate, Math.floor(rate)};
-                })
-                .collect(Collectors.toList());
+        // 비율 계산 - Map으로 관리
+        Map<Long, double[]> rawRateMap = new HashMap<>();
+        for (Map.Entry<Long, Long> entry : categoryAmountMap.entrySet()) {
+            double rate = (double) entry.getValue() / totalExpense * 100;
+            rawRateMap.put(entry.getKey(), new double[]{rate, Math.floor(rate)});
+        }
 
         // 합계 100% 보정
-        int totalDisplay = rawRates.stream().mapToInt(r -> (int) r[1]).sum();
+        int totalDisplay = rawRateMap.values().stream().mapToInt(r -> (int) r[1]).sum();
         int remainder = 100 - totalDisplay;
 
-        List<Integer> indices = new ArrayList<>();
-        for (int i = 0; i < rawRates.size(); i++) indices.add(i);
-        indices.sort((a, b) -> Double.compare(
-                rawRates.get(b)[0] - rawRates.get(b)[1],
-                rawRates.get(a)[0] - rawRates.get(a)[1]
-        ));
+        List<Long> sortedByRemainder = rawRateMap.entrySet().stream()
+                .sorted((a, b) -> Double.compare(
+                        b.getValue()[0] - b.getValue()[1],
+                        a.getValue()[0] - a.getValue()[1]
+                ))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
         for (int i = 0; i < remainder; i++) {
-            rawRates.get(indices.get(i))[1]++;
+            rawRateMap.get(sortedByRemainder.get(i))[1]++;
         }
 
         // 정렬 및 순위 부여
@@ -148,20 +138,17 @@ public class ReportService {
         for (int i = 0; i < sorted.size(); i++) {
             if (i > 0 && sorted.get(i).getValue() < sorted.get(i - 1).getValue()) rank = i + 1;
             Long categoryId = sorted.get(i).getKey();
-            int idx = categoryIds.indexOf(categoryId);
-
-            Expense sample = expenses.stream()
-                    .filter(e -> e.getCategory().getId().equals(categoryId))
-                    .findFirst().orElseThrow();
+            double[] rates = rawRateMap.get(categoryId);
+            Expense sample = categorySampleMap.get(categoryId);
 
             result.add(CategoryStatDto.builder()
                     .categoryId(categoryId)
                     .categoryName(sample.getCategory().getName())
                     .categoryGroupName(sample.getCategory().getCategoryGroup().getName())
                     .totalAmount(sorted.get(i).getValue())
-                    .shareRate(BigDecimal.valueOf(rawRates.get(idx)[0])
+                    .shareRate(BigDecimal.valueOf(rates[0])
                             .setScale(2, RoundingMode.HALF_UP).doubleValue())
-                    .shareRateDisplay((int) rawRates.get(idx)[1])
+                    .shareRateDisplay((int) rates[1])
                     .rank(rank)
                     .build());
         }
@@ -170,7 +157,7 @@ public class ReportService {
 
     private List<EmotionStatDto> buildEmotionStats(List<Expense> expenses) {
         Map<Long, Long> emotionAmountMap = new HashMap<>();
-        Map<Long, Integer> emotionCountMap = new HashMap<>();  // 건수 추가
+        Map<Long, Integer> emotionCountMap = new HashMap<>();
         Map<Long, String[]> emotionMetaMap = new HashMap<>();
 
         for (Expense expense : expenses) {
@@ -243,10 +230,10 @@ public class ReportService {
             List<CategoryStatDto> categoryList,
             List<EmotionStatDto> emotionList,
             List<SituationStatDto> situationList,
-            List<Expense> prevExpenses
+            List<CategoryAmountDto> prevCategoryAmounts
     ) {
         return CommentsDto.builder()
-                .categoryChange(buildCategoryChangeComment(categoryList, prevExpenses))
+                .categoryChange(buildCategoryChangeComment(categoryList, prevCategoryAmounts))
                 .emotionTrend(buildEmotionTrendComment(emotionList))
                 .situationTrend(buildSituationTrendComment(situationList))
                 .build();
@@ -254,9 +241,9 @@ public class ReportService {
 
     private CommentDto buildCategoryChangeComment(
             List<CategoryStatDto> categoryList,
-            List<Expense> prevExpenses
+            List<CategoryAmountDto> prevCategoryAmounts
     ) {
-        if (prevExpenses.isEmpty() || categoryList.isEmpty()) {
+        if (prevCategoryAmounts.isEmpty() || categoryList.isEmpty()) {
             return CommentDto.builder()
                     .type("NO_PREV_DATA")
                     .targetName(null)
@@ -264,10 +251,10 @@ public class ReportService {
                     .build();
         }
 
-        Map<Long, Long> prevCategoryMap = prevExpenses.stream()
-                .collect(Collectors.groupingBy(
-                        e -> e.getCategory().getId(),
-                        Collectors.summingLong(e -> e.getAmount().longValue())
+        Map<Long, Long> prevCategoryMap = prevCategoryAmounts.stream()
+                .collect(Collectors.toMap(
+                        CategoryAmountDto::categoryId,
+                        dto -> dto.amount().longValue()
                 ));
 
         CategoryStatDto maxChanged = null;
@@ -297,10 +284,23 @@ public class ReportService {
                     .build();
         }
 
+        // 증감률 계산
+        long prev = prevCategoryMap.getOrDefault(maxChanged.categoryId(), 0L);
+        long diffAmount = maxChanged.totalAmount() - prev;
+        double diffRate = prev > 0
+                ? BigDecimal.valueOf((double) diffAmount / prev * 100)
+                .setScale(0, RoundingMode.HALF_UP)
+                .doubleValue()
+                : 100.0;
+
+        String direction = diffAmount >= 0 ? "늘었어요" : "줄었어요";
+        double absDiffRate = Math.abs(diffRate);
+
         return CommentDto.builder()
                 .type("NORMAL")
                 .targetName(maxChanged.categoryName())
-                .message("이번 달 가장 크게 변한 지출은 " + maxChanged.categoryName() + "예요")
+                .message("지난달보다 " + maxChanged.categoryName() + " 지출이 "
+                        + (int) absDiffRate + "% " + direction)
                 .build();
     }
 

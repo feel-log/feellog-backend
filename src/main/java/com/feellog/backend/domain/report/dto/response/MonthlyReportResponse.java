@@ -23,9 +23,7 @@ public record MonthlyReportResponse(
     @Builder
     public record SummaryDto(
             Long totalIncome,
-            Long totalExpense,
-            Long diffAmount,
-            Double diffRate
+            Long totalExpense
     ) {}
 
     @Builder
