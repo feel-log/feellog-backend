@@ -11,18 +11,13 @@ import java.util.List;
 public interface ReportRepository extends JpaRepository<Expense, Long> {
 
     @Query("""
-        SELECT e FROM Expense e
-        JOIN FETCH e.category c
-        JOIN FETCH c.categoryGroup
-        LEFT JOIN FETCH e.expenseEmotions ee
-        LEFT JOIN FETCH ee.emotion em
-        LEFT JOIN FETCH em.emotionGroup
-        LEFT JOIN FETCH e.expenseSituationTags est
-        LEFT JOIN FETCH est.situationTag
-        WHERE e.user.id = :userId
-        AND e.expenseDate BETWEEN :startDate AND :endDate
-        AND e.isDeleted = false
-    """)
+    SELECT e FROM Expense e
+    JOIN FETCH e.category c
+    JOIN FETCH c.categoryGroup
+    WHERE e.user.id = :userId
+    AND e.expenseDate BETWEEN :startDate AND :endDate
+    AND e.isDeleted = false
+""")
     List<Expense> findExpensesByUserAndPeriod(
             @Param("userId") Long userId,
             @Param("startDate") LocalDate startDate,

@@ -12,8 +12,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -72,17 +73,9 @@ public class Expense {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    /**
-     * ==============================
-     * 통계(Statistics) 관련 필드 시작
-     * ==============================
-     */
-
-    // 감정 태그
     @OneToMany(mappedBy = "expense", fetch = FetchType.LAZY)
-    private Set<ExpenseEmotion> expenseEmotions = new HashSet<>();
+    private List<ExpenseEmotion> expenseEmotions = new ArrayList<>();
 
-    // 상황 태그
     @OneToMany(mappedBy = "expense", fetch = FetchType.LAZY)
-    private Set<ExpenseSituationTag> expenseSituationTags = new HashSet<>();
+    private List<ExpenseSituationTag> expenseSituationTags = new ArrayList<>();
 }
