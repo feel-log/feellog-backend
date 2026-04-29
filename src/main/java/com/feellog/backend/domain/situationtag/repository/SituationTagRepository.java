@@ -1,4 +1,4 @@
-package com.feellog.backend.domain.review.repository;
+package com.feellog.backend.domain.situationtag.repository;
 
 import com.feellog.backend.domain.situationtag.entity.SituationTag;
 import com.feellog.backend.domain.review.dto.SituationTagOptionResponse;

@@ -1,10 +1,9 @@
 package com.feellog.backend.domain.review.service;
 
 import com.feellog.backend.domain.emotion.entity.Emotion;
+import com.feellog.backend.domain.emotion.repository.EmotionRepository;
 import com.feellog.backend.domain.review.dto.response.ReviewDetailResponse;
-import com.feellog.backend.domain.review.repository.EmotionRepository;
 import com.feellog.backend.domain.situationtag.entity.SituationTag;
-import com.feellog.backend.domain.review.repository.SituationTagRepository;
 import com.feellog.backend.domain.review.dto.ReviewOptionsResponse;
 import com.feellog.backend.domain.review.dto.request.ReviewCreateRequest;
 import com.feellog.backend.domain.review.dto.response.ReviewCreateResponse;
@@ -14,6 +13,7 @@ import com.feellog.backend.domain.review.entity.ReviewResultTemplate;
 import com.feellog.backend.domain.review.repository.ReviewChoiceOptionRepository;
 import com.feellog.backend.domain.review.repository.ReviewRepository;
 import com.feellog.backend.domain.review.repository.ReviewResultTemplateRepository;
+import com.feellog.backend.domain.situationtag.repository.SituationTagRepository;
 import com.feellog.backend.domain.user.entity.User;
 import com.feellog.backend.domain.user.entity.UserStatus;
 import com.feellog.backend.domain.user.repository.UserRepository;
