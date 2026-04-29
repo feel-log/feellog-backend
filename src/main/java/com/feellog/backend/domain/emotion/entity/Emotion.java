@@ -1,4 +1,4 @@
-package com.feellog.backend.domain.catalog.category.entity;
+package com.feellog.backend.domain.emotion.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -10,17 +10,17 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "category")
-public class Category {
+@Table(name = "emotion")
+public class Emotion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "category_id")
+    @Column(name = "emotion_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_group_id", nullable = false)
-    private CategoryGroup categoryGroup;
+    @JoinColumn(name = "emotion_group_id", nullable = false)
+    private EmotionGroup emotionGroup;
 
     @Column(nullable = false, unique = true, length = 100)
     private String name;

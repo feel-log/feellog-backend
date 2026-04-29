@@ -1,6 +1,6 @@
 package com.feellog.backend.domain.review.repository;
 
-import com.feellog.backend.domain.catalog.emotion.entity.Emotion;
+import com.feellog.backend.domain.emotion.entity.Emotion;
 import com.feellog.backend.domain.review.dto.EmotionOptionResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

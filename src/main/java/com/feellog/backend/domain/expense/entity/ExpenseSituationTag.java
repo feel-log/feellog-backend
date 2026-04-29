@@ -1,6 +1,6 @@
 package com.feellog.backend.domain.expense.entity;
 
-import com.feellog.backend.domain.catalog.situationtag.entity.SituationTag;
+import com.feellog.backend.domain.situationtag.entity.SituationTag;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

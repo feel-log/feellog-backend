@@ -1,9 +1,9 @@
 package com.feellog.backend.domain.review.service;
 
-import com.feellog.backend.domain.catalog.emotion.entity.Emotion;
+import com.feellog.backend.domain.emotion.entity.Emotion;
 import com.feellog.backend.domain.review.dto.response.ReviewDetailResponse;
 import com.feellog.backend.domain.review.repository.EmotionRepository;
-import com.feellog.backend.domain.catalog.situationtag.entity.SituationTag;
+import com.feellog.backend.domain.situationtag.entity.SituationTag;
 import com.feellog.backend.domain.review.repository.SituationTagRepository;
 import com.feellog.backend.domain.review.dto.ReviewOptionsResponse;
 import com.feellog.backend.domain.review.dto.request.ReviewCreateRequest;
@@ -18,7 +18,6 @@ import com.feellog.backend.domain.user.entity.User;
 import com.feellog.backend.domain.user.entity.UserStatus;
 import com.feellog.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

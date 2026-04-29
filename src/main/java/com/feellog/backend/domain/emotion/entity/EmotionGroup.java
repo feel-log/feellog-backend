@@ -1,4 +1,4 @@
-package com.feellog.backend.domain.catalog.emotion.entity;
+package com.feellog.backend.domain.emotion.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

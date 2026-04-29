@@ -1,6 +1,6 @@
 package com.feellog.backend.domain.expense.entity;
 
-import com.feellog.backend.domain.catalog.emotion.entity.Emotion;
+import com.feellog.backend.domain.emotion.entity.Emotion;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

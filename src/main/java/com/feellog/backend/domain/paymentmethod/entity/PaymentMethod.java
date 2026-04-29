@@ -1,4 +1,4 @@
-package com.feellog.backend.domain.catalog.category.entity;
+package com.feellog.backend.domain.paymentmethod.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -10,15 +10,15 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "category_group")
-public class CategoryGroup {
+@Table(name = "payment_method")
+public class PaymentMethod {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "category_group_id")
+    @Column(name = "payment_method_id")
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(nullable = false, unique = true, length = 50)
     private String name;
 
     @Column(nullable = false)

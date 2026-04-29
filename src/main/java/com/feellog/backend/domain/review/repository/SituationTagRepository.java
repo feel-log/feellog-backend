@@ -1,6 +1,6 @@
 package com.feellog.backend.domain.review.repository;
 
-import com.feellog.backend.domain.catalog.situationtag.entity.SituationTag;
+import com.feellog.backend.domain.situationtag.entity.SituationTag;
 import com.feellog.backend.domain.review.dto.SituationTagOptionResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

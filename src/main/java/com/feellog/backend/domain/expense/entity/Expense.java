@@ -1,7 +1,7 @@
 package com.feellog.backend.domain.expense.entity;
 
-import com.feellog.backend.domain.catalog.category.entity.Category;
-import com.feellog.backend.domain.catalog.paymentmethod.entity.PaymentMethod;
+import com.feellog.backend.domain.category.entity.Category;
+import com.feellog.backend.domain.paymentmethod.entity.PaymentMethod;
 import com.feellog.backend.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

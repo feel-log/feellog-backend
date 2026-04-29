@@ -1,7 +1,7 @@
 package com.feellog.backend.domain.review.entity;
 
-import com.feellog.backend.domain.catalog.emotion.entity.Emotion;
-import com.feellog.backend.domain.catalog.situationtag.entity.SituationTag;
+import com.feellog.backend.domain.emotion.entity.Emotion;
+import com.feellog.backend.domain.situationtag.entity.SituationTag;
 import com.feellog.backend.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
