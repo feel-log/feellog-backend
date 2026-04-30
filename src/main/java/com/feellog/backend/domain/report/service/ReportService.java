@@ -12,6 +12,7 @@ import com.feellog.backend.domain.report.dto.response.CommentsDto;
 import com.feellog.backend.domain.report.dto.response.EmotionStatDto;
 import com.feellog.backend.domain.report.dto.response.MonthlyReportResponse;
 import com.feellog.backend.domain.report.dto.response.SituationStatDto;
+import com.feellog.backend.domain.report.dto.response.WeeklyReportResponse;
 import com.feellog.backend.domain.report.repository.IncomeReportRepository;
 import com.feellog.backend.domain.report.repository.ReportRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,6 +38,44 @@ public class ReportService {
 
     private final ReportRepository reportRepository;
     private final IncomeReportRepository incomeReportRepository;
+
+    @Transactional(readOnly = true)
+    public WeeklyReportResponse getWeeklyReport(Long userId) {
+        // 기간 계산 (일요일 ~ 토요일)
+        LocalDate today = LocalDate.now();
+        LocalDate weekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
+        LocalDate weekEnd = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SATURDAY));
+
+        // 데이터 조회
+        List<Expense> expenses = reportRepository.findExpensesOnlyByUserAndPeriod(userId, weekStart, weekEnd);
+
+        // 날짜별 지출 합산
+        Map<LocalDate, Long> dailyAmountMap = expenses.stream()
+                .collect(Collectors.groupingBy(
+                        Expense::getExpenseDate,
+                        Collectors.summingLong(e -> e.getAmount().longValue())
+                ));
+
+        // 전체 날짜 배열 생성 (지출 없는 날 0원 처리)
+        List<WeeklyReportResponse.DailyAmountDto> dailyAmounts = weekStart.datesUntil(weekEnd.plusDays(1))
+                .map(date -> WeeklyReportResponse.DailyAmountDto.builder()
+                        .date(date)
+                        .expense(dailyAmountMap.getOrDefault(date, 0L))
+                        .build())
+                .toList();
+
+        // 전체 합계 계산
+        long totalExpense = dailyAmounts.stream()
+                .mapToLong(WeeklyReportResponse.DailyAmountDto::expense)
+                .sum();
+
+        return WeeklyReportResponse.builder()
+                .weekStart(weekStart)
+                .weekEnd(weekEnd)
+                .totalExpense(totalExpense)
+                .dailyAmounts(dailyAmounts)
+                .build();
+    }
 
     @Transactional(readOnly = true)
     public MonthlyReportResponse getMonthlyReport(Long userId, int year, int month) {

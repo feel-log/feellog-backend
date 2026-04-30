@@ -38,4 +38,16 @@ public interface ReportRepository extends JpaRepository<Expense, Long> {
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
+
+    @Query("""
+    SELECT e FROM Expense e
+    WHERE e.user.id = :userId
+    AND e.expenseDate BETWEEN :startDate AND :endDate
+    AND e.isDeleted = false
+""")
+    List<Expense> findExpensesOnlyByUserAndPeriod(
+            @Param("userId") Long userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 }
