@@ -14,6 +14,8 @@ import com.feellog.backend.domain.situationtag.repository.SituationTagRepository
 import com.feellog.backend.domain.user.entity.User;
 import com.feellog.backend.domain.user.entity.UserStatus;
 import com.feellog.backend.domain.user.repository.UserRepository;
+import com.feellog.backend.global.exception.BusinessException;
+import com.feellog.backend.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,16 +58,16 @@ public class ReviewService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         Emotion emotion = emotionRepository.findById(request.emotionId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 감정입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.EMOTION_NOT_FOUND));
 
         SituationTag situationTag = situationTagRepository.findById(request.situationTagId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 소비 상황입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.SITUATION_TAG_NOT_FOUND));
 
         ReviewChoiceOption satisfactionOption = reviewChoiceOptionRepository.findById(request.satisfactionOptionId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 만족도 선택지입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_OPTION_NOT_FOUND));
 
         ReviewChoiceOption nextActionOption = reviewChoiceOptionRepository.findById(request.nextActionOptionId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 내일 소비 계획 선택지입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_OPTION_NOT_FOUND));
 
         Review review = reviewRepository
                 .findByUserIdAndReviewDate(userId, reviewDate)
@@ -94,9 +96,9 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    public ReviewResponse getReview(Long userId, LocalDate date) {
-        Review review = reviewRepository.findByUserIdAndReviewDate(userId, date)
-                .orElseThrow(() -> new IllegalArgumentException("해당 날짜의 회고가 존재하지 않습니다."));
+    public ReviewResponse getReview(Long userId, LocalDate reviewDate) {
+        Review review = reviewRepository.findByUserIdAndReviewDate(userId, reviewDate)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
 
         return reviewResultService.createResponse(review);
     }

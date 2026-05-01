@@ -20,6 +20,12 @@ public enum ErrorCode {
     // 소셜 로그인
     SOCIAL_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "소셜 로그인에 실패했습니다."),
 
+    // 회고
+    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 날짜의 회고가 존재하지 않습니다."),
+    EMOTION_NOT_FOUND(HttpStatus.BAD_REQUEST, "존재하지 않는 감정입니다."),
+    SITUATION_TAG_NOT_FOUND(HttpStatus.BAD_REQUEST, "존재하지 않는 소비 상황입니다."),
+    REVIEW_OPTION_NOT_FOUND(HttpStatus.BAD_REQUEST, "존재하지 않는 회고 선택지입니다."),
+
     // 공통
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "잘못된 입력값입니다.");
 
