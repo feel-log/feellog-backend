@@ -389,8 +389,9 @@ CREATE TABLE review_result_template
     satisfaction_option_id    BIGINT NOT NULL,
     next_action_option_id     BIGINT NOT NULL,
 
-    title                     VARCHAR(150) NOT NULL,
-    summary_text              TEXT         NOT NULL,
+    title_prefix_text         VARCHAR(150) NOT NULL,
+    title_highlight_text      VARCHAR(50)  NOT NULL,
+    title_suffix_text         VARCHAR(150) NOT NULL,
 
     feedback_title            VARCHAR(150) NOT NULL,
     feedback_text             TEXT         NOT NULL,
