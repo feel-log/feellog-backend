@@ -45,7 +45,7 @@ public class ReviewService {
         );
     }
 
-    // REV-03 회고 선택 내용 저장하기
+    // REV-03 회고 선택 내용 저장하기 (없으면 새로 생성, 있으면 덮어쓰기)
     @Transactional
     public ReviewResponse upsertReview(
             Long userId,

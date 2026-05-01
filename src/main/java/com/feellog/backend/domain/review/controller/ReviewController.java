@@ -31,11 +31,11 @@ public class ReviewController {
         return reviewService.upsertReview(userId, reviewDate, request);
     }
 
-    @GetMapping
+    @GetMapping("/{reviewDate}")
     public ReviewResponse getReview(
             @AuthenticationPrincipal Long userId,
-            @RequestParam LocalDate date
+            @PathVariable LocalDate reviewDate
     ) {
-        return reviewService.getReview(userId, date);
+        return reviewService.getReview(userId, reviewDate);
     }
 }
