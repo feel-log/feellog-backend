@@ -5,6 +5,7 @@ import com.feellog.backend.domain.user.entity.User;
 import com.feellog.backend.domain.user.entity.UserStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -12,6 +13,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByProviderAndProviderUserId(Provider provider, String providerUserId);
 
     Optional<User> findByIdAndStatus(Long id, UserStatus status);
+
+    List<User> findAllByStatus(UserStatus status);
 
     boolean existsByEmail(String email);
 }
