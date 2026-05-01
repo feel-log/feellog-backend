@@ -12,9 +12,7 @@ public interface ReviewChoiceOptionRepository extends JpaRepository<ReviewChoice
     @Query("""
         SELECT new com.feellog.backend.domain.review.dto.ReviewChoiceOptionResponse(
             r.id,
-            r.optionText,
-            r.optionValue,
-            r.score
+            r.optionText
         )
         FROM ReviewChoiceOption r
         WHERE r.questionType = :questionType

@@ -19,7 +19,6 @@ public interface EmotionRepository extends JpaRepository<Emotion, Long> {
     @Query("""
         SELECT new com.feellog.backend.domain.review.dto.EmotionOptionResponse(
             e.id,
-            eg.name,
             e.name
         )
         FROM Emotion e
