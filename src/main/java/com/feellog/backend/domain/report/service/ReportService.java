@@ -1,11 +1,14 @@
 package com.feellog.backend.domain.report.service;
 
+import com.feellog.backend.domain.category.entity.Category;
+import com.feellog.backend.domain.category.repository.CategoryRepository;
 import com.feellog.backend.domain.expense.entity.Expense;
 import com.feellog.backend.domain.expense.entity.ExpenseEmotion;
 import com.feellog.backend.domain.expense.entity.ExpenseSituationTag;
 import com.feellog.backend.domain.income.entity.Income;
 import com.feellog.backend.domain.report.dto.CategoryAmountDto;
 
+import com.feellog.backend.domain.report.dto.response.CategoryDetailResponse;
 import com.feellog.backend.domain.report.dto.response.CategoryStatDto;
 import com.feellog.backend.domain.report.dto.response.CommentDto;
 import com.feellog.backend.domain.report.dto.response.CommentsDto;
@@ -15,7 +18,13 @@ import com.feellog.backend.domain.report.dto.response.SituationStatDto;
 import com.feellog.backend.domain.report.dto.response.WeeklyReportResponse;
 import com.feellog.backend.domain.report.repository.IncomeReportRepository;
 import com.feellog.backend.domain.report.repository.ReportRepository;
+import com.feellog.backend.global.exception.BusinessException;
+import com.feellog.backend.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,9 +36,12 @@ import java.time.YearMonth;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,6 +50,7 @@ public class ReportService {
 
     private final ReportRepository reportRepository;
     private final IncomeReportRepository incomeReportRepository;
+    private final CategoryRepository categoryRepository;
 
     @Transactional(readOnly = true)
     public WeeklyReportResponse getWeeklyReport(Long userId) {
@@ -153,7 +166,7 @@ public class ReportService {
             categoryAmountMap.merge(categoryId, e.getAmount().longValue(), Long::sum);
         }
 
-        // 비율 계산 - Map으로 관리
+        // 비율 계산
         Map<Long, double[]> rawRateMap = new HashMap<>();
         for (Map.Entry<Long, Long> entry : categoryAmountMap.entrySet()) {
             double rate = (double) entry.getValue() / totalExpense * 100;
@@ -195,7 +208,6 @@ public class ReportService {
             result.add(CategoryStatDto.builder()
                     .categoryId(categoryId)
                     .categoryName(sample.getCategory().getName())
-                    .categoryGroupName(sample.getCategory().getCategoryGroup().getName())
                     .totalAmount(sorted.get(i).getValue())
                     .shareRate(BigDecimal.valueOf(rates[0])
                             .setScale(2, RoundingMode.HALF_UP).doubleValue())
@@ -441,6 +453,112 @@ public class ReportService {
                 .type("NORMAL")
                 .targetName(situationName)
                 .message(situationName + " 관련 소비가 가장 많았어요")
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public CategoryDetailResponse getCategoryDetail(Long userId, Long categoryId, int year, int month, int page, int size, String sort) {
+
+        // 카테고리 Id 검증
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
+
+        Sort sortOption = switch (sort) {
+            case "OLDEST" -> Sort.by(
+                    Sort.Order.asc("expenseDate"),
+                    Sort.Order.asc("expenseTime").nullsLast(),
+                    Sort.Order.asc("createdAt")
+            );
+            case "AMOUNT_HIGH" -> Sort.by(
+                    Sort.Order.desc("amount"),
+                    Sort.Order.desc("expenseDate"),
+                    Sort.Order.desc("expenseTime").nullsLast(),
+                    Sort.Order.desc("createdAt")
+            );
+            case "AMOUNT_LOW" -> Sort.by(
+                    Sort.Order.asc("amount"),
+                    Sort.Order.desc("expenseDate"),
+                    Sort.Order.desc("expenseTime").nullsLast(),
+                    Sort.Order.desc("createdAt")
+            );
+            default -> Sort.by(
+                    Sort.Order.desc("expenseDate"),
+                    Sort.Order.desc("expenseTime").nullsLast(),
+                    Sort.Order.desc("createdAt")
+            );
+        };
+
+        // page가 1보다 작으면 1로 고정
+        int validatedPage = Math.max(1, page);
+        Pageable pageable = PageRequest.of(validatedPage - 1, size, sortOption);
+
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+
+        // 지출 내역 조회
+        Page<Expense> expensePage = reportRepository.findExpensesByCategoryAndPeriod(userId, categoryId, startDate, endDate, pageable);
+
+        // 총 지출 합산
+        long totalAmount = Optional.ofNullable(reportRepository.findTotalAmountByCategoryAndPeriod(userId, categoryId, startDate, endDate))
+                .map(BigDecimal::longValue)
+                .orElse(0L);
+
+        // 데이터가 없을 경우
+        List<CategoryDetailResponse.DailyLogDto> dailyLogs = null;
+        List<CategoryDetailResponse.ExpenseDto> expenses = null;
+
+        if (sort.equals("AMOUNT_HIGH") || sort.equals("AMOUNT_LOW")) {
+            expenses = expensePage.getContent().stream()
+                    .map(this::mapToExpenseDto)
+                    .toList();
+        } else {
+            Map<LocalDate, List<CategoryDetailResponse.ExpenseDto>> groupedByDate = expensePage.getContent().stream()
+                    .collect(Collectors.groupingBy(
+                            Expense::getExpenseDate,
+                            LinkedHashMap::new,
+                            Collectors.mapping(this::mapToExpenseDto, Collectors.toList())
+                    ));
+
+            dailyLogs = groupedByDate.entrySet().stream()
+                    .map(entry -> new CategoryDetailResponse.DailyLogDto(entry.getKey(), entry.getValue()))
+                    .toList();
+        }
+
+        return CategoryDetailResponse.builder()
+                .category(CategoryDetailResponse.CategoryInfo.builder()
+                        .categoryId(category.getId())
+                        .categoryName(category.getName())
+                        .build())
+                .period(new CategoryDetailResponse.PeriodDto(startDate, endDate))
+                .totalAmount(totalAmount)
+                .totalElements((int) expensePage.getTotalElements())
+                .totalPages(expensePage.getTotalPages())
+                .currentPage(validatedPage)
+                .dailyLogs(dailyLogs) // 내역이 없으면 빈 리스트 [] 전달
+                .expenses(expenses)
+                .build();
+        }
+
+    private CategoryDetailResponse.ExpenseDto mapToExpenseDto(Expense e) {
+        return CategoryDetailResponse.ExpenseDto.builder()
+                .expenseId(e.getId())
+                .date(e.getExpenseDate())
+                .amount(e.getAmount().longValue())
+                .memo(e.getMemo())
+                .paymentMethod(e.getPaymentMethod().getName())
+                .emotions(e.getExpenseEmotions().stream()
+                        .sorted(Comparator.comparing(ee -> ee.getEmotion().getId()))
+                        .map(ee -> new CategoryDetailResponse.EmotionDto(
+                                ee.getEmotion().getId(),
+                                ee.getEmotion().getName()))
+                        .toList())
+                .situationTags(e.getExpenseSituationTags().stream()
+                        .sorted(Comparator.comparing(est -> est.getSituationTag().getId()))
+                        .map(est -> new CategoryDetailResponse.SituationTagDto(
+                                est.getSituationTag().getId(),
+                                est.getSituationTag().getName()))
+                        .toList())
                 .build();
     }
 }
