@@ -21,29 +21,32 @@ public class User extends BaseTimeEntity {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(name = "provider", nullable = false, length = 20)
     private Provider provider;
 
-    @Column(name = "provider_user_id", nullable = false)
+    @Column(name = "provider_user_id", nullable = false, length = 255)
     private String providerUserId;
 
-    @Column(unique = true)
+    @Column(name = "email", unique = true, length = 255)
     private String email;
 
-    @Column(nullable = false, length = 100)
+    @Column(name = "nickname", nullable = false, length = 100)
     private String nickname;
 
+    @Column(name = "birth_date")
     private LocalDate birthDate;
 
-    @Column(length = 20)
+    @Column(name = "gender", length = 20)
     private String gender;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(name = "status", nullable = false, length = 20)
     private UserStatus status;
 
+    @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
+    @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
     @Builder
