@@ -389,8 +389,9 @@ CREATE TABLE review_result_template
     satisfaction_option_id    BIGINT NOT NULL,
     next_action_option_id     BIGINT NOT NULL,
 
-    title                     VARCHAR(150) NOT NULL,
-    summary_text              TEXT         NOT NULL,
+    title_prefix_text         VARCHAR(150) NOT NULL,
+    title_highlight_text      VARCHAR(50)  NOT NULL,
+    title_suffix_text         VARCHAR(150) NOT NULL,
 
     feedback_title            VARCHAR(150) NOT NULL,
     feedback_text             TEXT         NOT NULL,
@@ -429,37 +430,28 @@ CREATE TABLE review_result_template
 -- REVIEW
 -- 특정 날짜의 설문 기반 회고
 -- expense, income, asset과 직접 연결하지 않음
+-- 설문에 대한 결과가 아닌 설문 값만 저장 후 조회할 때 해당 정보 통해서 조회
 -- =========================================================
 CREATE TABLE review
 (
-    review_id                 BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id                   BIGINT NOT NULL,
-    review_date               DATE   NOT NULL,
+    review_id              BIGINT AUTO_INCREMENT PRIMARY KEY,
 
-    emotion_id                BIGINT NOT NULL,
-    situation_tag_id          BIGINT NOT NULL,
-    satisfaction_option_id    BIGINT NOT NULL,
-    next_action_option_id     BIGINT NOT NULL,
+    user_id                BIGINT NOT NULL,
+    review_date            DATE   NOT NULL,
 
-    review_result_template_id BIGINT,
+    emotion_id             BIGINT NOT NULL,
+    situation_tag_id       BIGINT NOT NULL,
+    satisfaction_option_id BIGINT NOT NULL,
+    next_action_option_id  BIGINT NOT NULL,
 
-    title                     VARCHAR(150) NOT NULL,
-    summary_text              TEXT         NOT NULL,
+    created_at             DATETIME NOT NULL,
+    updated_at             DATETIME NOT NULL,
 
-    feedback_title            VARCHAR(150) NOT NULL,
-    feedback_text             TEXT         NOT NULL,
-
-    guide_title               VARCHAR(150) NOT NULL,
-    guide_item_1              VARCHAR(255) NOT NULL,
-    guide_item_2              VARCHAR(255) NOT NULL,
-    guide_item_3              VARCHAR(255) NOT NULL,
-
-    created_at                DATETIME NOT NULL,
-    updated_at                DATETIME NOT NULL,
-
+    -- 사용자 + 날짜 기준 1개만 허용 (덮어쓰기 가능)
     CONSTRAINT uq_review_user_date
         UNIQUE (user_id, review_date),
 
+    -- FK
     CONSTRAINT fk_review_user
         FOREIGN KEY (user_id)
             REFERENCES users (user_id),
@@ -478,9 +470,5 @@ CREATE TABLE review
 
     CONSTRAINT fk_review_next_action
         FOREIGN KEY (next_action_option_id)
-            REFERENCES review_choice_option (review_choice_option_id),
-
-    CONSTRAINT fk_review_result_template
-        FOREIGN KEY (review_result_template_id)
-            REFERENCES review_result_template (review_result_template_id)
+            REFERENCES review_choice_option (review_choice_option_id)
 );

@@ -49,19 +49,22 @@ public class ReviewResultTemplate {
     @JoinColumn(name = "next_action_option_id", nullable = false)
     private ReviewChoiceOption nextActionOption;
 
-    @Column(nullable = false, length = 150)
-    private String title;
+    @Column(name = "title_prefix_text", nullable = false, length = 150)
+    private String titlePrefixText;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String summaryText;
+    @Column(name = "title_highlight_text", nullable = false, length = 50)
+    private String titleHighlightText;
 
-    @Column(nullable = false, length = 150)
+    @Column(name = "title_suffix_text", nullable = false, length = 150)
+    private String titleSuffixText;
+
+    @Column(name = "feedback_title", nullable = false, length = 150)
     private String feedbackTitle;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(name = "feedback_text", nullable = false)
     private String feedbackText;
 
-    @Column(nullable = false, length = 150)
+    @Column(name = "guide_title", nullable = false, length = 150)
     private String guideTitle;
 
     @Column(name = "guide_item_1", nullable = false, length = 255)
