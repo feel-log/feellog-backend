@@ -50,34 +50,6 @@ public class Review {
     @JoinColumn(name = "next_action_option_id", nullable = false)
     private ReviewChoiceOption nextActionOption;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "review_result_template_id")
-    private ReviewResultTemplate reviewResultTemplate;
-
-    @Column(nullable = false, length = 150)
-    private String title;
-
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String summaryText;
-
-    @Column(nullable = false, length = 150)
-    private String feedbackTitle;
-
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String feedbackText;
-
-    @Column(nullable = false, length = 150)
-    private String guideTitle;
-
-    @Column(name = "guide_item_1", nullable = false, length = 255)
-    private String guideItem1;
-
-    @Column(name = "guide_item_2", nullable = false, length = 255)
-    private String guideItem2;
-
-    @Column(name = "guide_item_3", nullable = false, length = 255)
-    private String guideItem3;
-
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -90,40 +62,30 @@ public class Review {
             Emotion emotion,
             SituationTag situationTag,
             ReviewChoiceOption satisfactionOption,
-            ReviewChoiceOption nextActionOption,
-            ReviewResultTemplate reviewResultTemplate,
-            String title,
-            String summaryText,
-            String feedbackTitle,
-            String feedbackText,
-            String guideTitle,
-            String guideItem1,
-            String guideItem2,
-            String guideItem3
+            ReviewChoiceOption nextActionOption
     ) {
         Review review = new Review();
-
         review.user = user;
         review.reviewDate = reviewDate;
         review.emotion = emotion;
         review.situationTag = situationTag;
         review.satisfactionOption = satisfactionOption;
         review.nextActionOption = nextActionOption;
-        review.reviewResultTemplate = reviewResultTemplate;
-
-        review.title = title;
-        review.summaryText = summaryText;
-        review.feedbackTitle = feedbackTitle;
-        review.feedbackText = feedbackText;
-        review.guideTitle = guideTitle;
-        review.guideItem1 = guideItem1;
-        review.guideItem2 = guideItem2;
-        review.guideItem3 = guideItem3;
-
-        LocalDateTime now = LocalDateTime.now();
-        review.createdAt = now;
-        review.updatedAt = now;
-
+        review.createdAt = LocalDateTime.now();
+        review.updatedAt = LocalDateTime.now();
         return review;
+    }
+
+    public void update(
+            Emotion emotion,
+            SituationTag situationTag,
+            ReviewChoiceOption satisfactionOption,
+            ReviewChoiceOption nextActionOption
+    ) {
+        this.emotion = emotion;
+        this.situationTag = situationTag;
+        this.satisfactionOption = satisfactionOption;
+        this.nextActionOption = nextActionOption;
+        this.updatedAt = LocalDateTime.now();
     }
 }

@@ -1,12 +1,10 @@
 package com.feellog.backend.domain.review.controller;
 
 import com.feellog.backend.domain.review.dto.ReviewOptionsResponse;
-import com.feellog.backend.domain.review.dto.request.ReviewCreateRequest;
-import com.feellog.backend.domain.review.dto.response.ReviewCreateResponse;
-import com.feellog.backend.domain.review.dto.response.ReviewDetailResponse;
+import com.feellog.backend.domain.review.dto.request.ReviewUpsertRequest;
+import com.feellog.backend.domain.review.dto.response.ReviewResponse;
 import com.feellog.backend.domain.review.service.ReviewService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,20 +22,20 @@ public class ReviewController {
         return reviewService.getReviewOptions();
     }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public ReviewCreateResponse createReview(
+    @PutMapping("/{reviewDate}")
+    public ReviewResponse upsertReview(
             @AuthenticationPrincipal Long userId,
-            @RequestBody ReviewCreateRequest request
+            @PathVariable LocalDate reviewDate,
+            @RequestBody ReviewUpsertRequest request
     ) {
-        return reviewService.createReview(userId, request);
+        return reviewService.upsertReview(userId, reviewDate, request);
     }
 
-    @GetMapping
-    public ReviewDetailResponse getReview(
+    @GetMapping("/{reviewDate}")
+    public ReviewResponse getReview(
             @AuthenticationPrincipal Long userId,
-            @RequestParam LocalDate date
+            @PathVariable LocalDate reviewDate
     ) {
-        return reviewService.getReview(userId, date);
+        return reviewService.getReview(userId, reviewDate);
     }
 }
