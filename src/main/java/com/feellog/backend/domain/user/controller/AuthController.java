@@ -24,12 +24,12 @@ public class AuthController {
 
     @PostMapping("/kakao")
     public ResponseEntity<TokenResponse> kakaoLogin(@Valid @RequestBody SocialLoginRequest request) {
-        return ResponseEntity.ok(socialAuthService.kakaoLogin(request.code()));
+        return ResponseEntity.ok(socialAuthService.kakaoLogin(request.accessToken()));
     }
 
     @PostMapping("/google")
     public ResponseEntity<TokenResponse> googleLogin(@Valid @RequestBody SocialLoginRequest request) {
-        return ResponseEntity.ok(socialAuthService.googleLogin(request.code()));
+        return ResponseEntity.ok(socialAuthService.googleLogin(request.accessToken()));
     }
 
     @PostMapping("/refresh")

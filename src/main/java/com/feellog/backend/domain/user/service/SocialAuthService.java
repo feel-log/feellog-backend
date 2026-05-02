@@ -24,8 +24,7 @@ public class SocialAuthService {
     private final UserRepository userRepository;
     private final AuthService authService;
 
-    public TokenResponse kakaoLogin(String code) {
-        String accessToken = kakaoAuthClient.getAccessToken(code);
+    public TokenResponse kakaoLogin(String accessToken) {
         KakaoUserInfo userInfo = kakaoAuthClient.getUserInfo(accessToken);
 
         String providerUserId = String.valueOf(userInfo.id());
@@ -37,8 +36,7 @@ public class SocialAuthService {
         return findOrCreateAndIssueTokens(Provider.KAKAO, providerUserId, email, nickname);
     }
 
-    public TokenResponse googleLogin(String code) {
-        String accessToken = googleAuthClient.getAccessToken(code);
+    public TokenResponse googleLogin(String accessToken) {
         GoogleUserInfo userInfo = googleAuthClient.getUserInfo(accessToken);
 
         return findOrCreateAndIssueTokens(Provider.GOOGLE, userInfo.id(), userInfo.email(), userInfo.name());
