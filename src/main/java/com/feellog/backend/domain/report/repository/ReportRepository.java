@@ -85,4 +85,37 @@ public interface ReportRepository extends JpaRepository<Expense, Long> {
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
+
+    @Query("""
+        SELECT e FROM Expense e
+        JOIN FETCH e.category c
+        JOIN FETCH e.paymentMethod p
+        JOIN e.expenseEmotions ee
+        WHERE e.user.id = :userId
+        AND ee.emotion.id = :emotionId
+        AND e.expenseDate BETWEEN :startDate AND :endDate
+        AND e.isDeleted = false
+    """)
+    Page<Expense> findExpensesByEmotionAndPeriod(
+            @Param("userId") Long userId,
+            @Param("emotionId") Long emotionId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT SUM(e.amount) FROM Expense e
+        JOIN e.expenseEmotions ee
+        WHERE e.user.id = :userId
+        AND ee.emotion.id = :emotionId
+        AND e.expenseDate BETWEEN :startDate AND :endDate
+        AND e.isDeleted = false
+    """)
+    BigDecimal findTotalAmountByEmotionAndPeriod(
+            @Param("userId") Long userId,
+            @Param("emotionId") Long emotionId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 }

@@ -1,6 +1,7 @@
 package com.feellog.backend.domain.report.controller;
 
 import com.feellog.backend.domain.report.dto.response.CategoryDetailResponse;
+import com.feellog.backend.domain.report.dto.response.EmotionDetailResponse;
 import com.feellog.backend.domain.report.dto.response.MonthlyReportResponse;
 import com.feellog.backend.domain.report.dto.response.WeeklyReportResponse;
 import com.feellog.backend.domain.report.service.ReportService;
@@ -47,5 +48,18 @@ public class ReportController {
             @RequestParam(defaultValue = "LATEST") String sort
     ) {
         return ResponseEntity.ok(reportService.getCategoryDetail(userId, categoryId, year, month, page, size, sort));
+    }
+
+    @GetMapping("/emotions/{emotionId}/expenses")
+    public ResponseEntity<EmotionDetailResponse> getEmotionDetail(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long emotionId,
+            @RequestParam int year,
+            @RequestParam int month,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "LATEST") String sort
+    ) {
+        return ResponseEntity.ok(reportService.getEmotionDetail(userId, emotionId, year, month, page, size, sort));
     }
 }
