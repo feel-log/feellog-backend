@@ -31,6 +31,12 @@ jwt:
 firebase:
   credential-path: ${FIREBASE_CREDENTIAL_PATH}
 
+oauth:
+  google:
+    client-id: ${GOOGLE_CLIENT_ID}
+  kakao:
+    app-id: ${KAKAO_APP_ID}
+
 logging:
   level:
     org.hibernate.SQL: debug
