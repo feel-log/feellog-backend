@@ -2,6 +2,8 @@ package com.feellog.backend.domain.report.repository;
 
 import com.feellog.backend.domain.expense.entity.Expense;
 import com.feellog.backend.domain.report.dto.CategoryAmountDto;
+import com.feellog.backend.domain.report.dto.projection.CategoryExpenseSummary;
+import com.feellog.backend.domain.report.dto.projection.EmotionSummary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -117,5 +119,57 @@ public interface ReportRepository extends JpaRepository<Expense, Long> {
             @Param("emotionId") Long emotionId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
+    );
+
+    // 카테고리별 집계 (동률 정렬 포함)
+    @Query("""
+        SELECT e.category.id           AS categoryId,
+               e.category.name         AS name,
+               SUM(e.amount)           AS total,
+               MIN(e.expenseTime)      AS firstTime,
+               MAX(e.createdAt)        AS lastCreatedAt
+        FROM Expense e
+        WHERE e.user.id = :userId
+          AND e.expenseDate = :date
+          AND e.isDeleted = false
+        GROUP BY e.category.id, e.category.name
+        ORDER BY total DESC, CASE WHEN MIN(e.expenseTime) IS NULL THEN 1 ELSE 0 END ASC, firstTime ASC, lastCreatedAt DESC, e.category.id ASC
+    """)
+    List<CategoryExpenseSummary> findCategoryExpenseSummaryByDate(
+            @Param("userId") Long userId,
+            @Param("date") LocalDate date
+    );
+
+    // 감정 집계
+    @Query("""
+        SELECT ee.emotion.id                AS emotionId,
+               ee.emotion.name              AS name,
+               ee.emotion.emotionGroup.name AS emotionGroupName,
+               COUNT(ee.expense.id)         AS emotionCount,
+               SUM(ee.expense.amount)       AS linkedAmount,
+               MAX(ee.createdAt)            AS lastUsedAt
+        FROM ExpenseEmotion ee
+        WHERE ee.expense.user.id = :userId
+          AND ee.expense.expenseDate = :date
+          AND ee.expense.isDeleted = false
+        GROUP BY ee.emotion.id, ee.emotion.name, ee.emotion.emotionGroup.name
+        ORDER BY emotionCount DESC, linkedAmount DESC, lastUsedAt DESC, ee.emotion.id ASC
+    """)
+    List<EmotionSummary> findEmotionSummaryByDate(
+            @Param("userId") Long userId,
+            @Param("date") LocalDate date
+    );
+
+    // 총 지출 합계
+    @Query("""
+        SELECT COALESCE(SUM(e.amount), 0)
+        FROM Expense e
+        WHERE e.user.id = :userId
+          AND e.expenseDate = :date
+          AND e.isDeleted = false
+    """)
+    BigDecimal findTotalExpenseByDate(
+            @Param("userId") Long userId,
+            @Param("date") LocalDate date
     );
 }
