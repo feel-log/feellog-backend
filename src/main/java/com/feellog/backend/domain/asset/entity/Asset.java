@@ -48,4 +48,32 @@ public class Asset {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    public static Asset create(User user, AssetCategory assetCategory, BigDecimal amount, LocalDate assetDate, String memo) {
+        Asset asset = new Asset();
+        asset.user = user;
+        asset.assetCategory = assetCategory;
+        asset.amount = amount;
+        asset.assetDate = assetDate;
+        asset.memo = memo;
+        asset.isDeleted = false;
+        asset.createdAt = LocalDateTime.now();
+        asset.updatedAt = LocalDateTime.now();
+        return asset;
+    }
+
+    public void update(AssetCategory assetCategory, BigDecimal amount, LocalDate assetDate, String memo) {
+        this.assetCategory = assetCategory;
+        this.amount = amount;
+        this.assetDate = assetDate;
+        this.memo = memo;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void delete() {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
 }
