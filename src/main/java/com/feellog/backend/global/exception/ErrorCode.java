@@ -26,6 +26,12 @@ public enum ErrorCode {
     SITUATION_TAG_NOT_FOUND(HttpStatus.BAD_REQUEST, "존재하지 않는 소비 상황입니다."),
     REVIEW_OPTION_NOT_FOUND(HttpStatus.BAD_REQUEST, "존재하지 않는 회고 선택지입니다."),
 
+    // 자산
+    ASSET_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 자산 기록입니다."),
+    ASSET_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 자산 카테고리입니다."),
+    INVALID_ASSET_AMOUNT(HttpStatus.BAD_REQUEST, "자산 금액은 0원 이상이어야 합니다."),
+    INVALID_ASSET_SORT_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 자산 정렬 조건입니다."),
+
     // 공통
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "잘못된 입력값입니다."),
 
