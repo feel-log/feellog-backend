@@ -33,7 +33,8 @@ public class SecurityConfig {
                                 "/api/v1/auth/refresh",
                                 "/api/v1/auth/kakao",
                                 "/api/v1/auth/google",
-                                "/api/v1/auth/guest"
+                                "/api/v1/auth/guest",
+                                "/api/v1/master-data"
                         ).permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated()
