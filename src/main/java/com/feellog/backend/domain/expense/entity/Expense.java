@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -16,10 +17,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+
+@NoArgsConstructor(access = AccessLevel.PUBLIC)
 @Entity
 @Table(name = "expense")
+@Getter
+@Setter
 public class Expense {
 
     @Id
