@@ -501,8 +501,7 @@ public class ReportService {
             );
         };
 
-        int validatedPage = Math.max(1, page);
-        Pageable pageable = PageRequest.of(validatedPage - 1, size, sortOption);
+        Pageable pageable = PageRequest.of(page - 1, size, sortOption);
 
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate startDate = yearMonth.atDay(1);
@@ -537,7 +536,7 @@ public class ReportService {
                 .totalAmount(totalAmount)
                 .totalElements((int) expensePage.getTotalElements())
                 .totalPages(expensePage.getTotalPages())
-                .currentPage(validatedPage)
+                .currentPage(page)
                 .dailyLogs(dailyLogs)
                 .expenses(expenses)
                 .build();
@@ -597,9 +596,7 @@ public class ReportService {
             );
         };
 
-        // page가 1보다 작으면 1로 고정
-        int validatedPage = Math.max(1, page);
-        Pageable pageable = PageRequest.of(validatedPage - 1, size, sortOption);
+        Pageable pageable = PageRequest.of(page - 1, size, sortOption);
 
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate startDate = yearMonth.atDay(1);
@@ -641,7 +638,7 @@ public class ReportService {
                 .totalAmount(totalAmount)
                 .totalElements((int) expensePage.getTotalElements())
                 .totalPages(expensePage.getTotalPages())
-                .currentPage(validatedPage)
+                .currentPage(page)
                 .dailyLogs(dailyLogs) // 내역이 없으면 빈 리스트 [] 전달
                 .expenses(expenses)
                 .build();
@@ -699,8 +696,7 @@ public class ReportService {
             );
         };
 
-        int validatedPage = Math.max(1, page);
-        Pageable pageable = PageRequest.of(validatedPage - 1, size, sortOption);
+        Pageable pageable = PageRequest.of(page - 1, size, sortOption);
 
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate startDate = yearMonth.atDay(1);
@@ -739,7 +735,7 @@ public class ReportService {
                 .totalAmount(totalAmount)
                 .totalElements((int) expensePage.getTotalElements())
                 .totalPages(expensePage.getTotalPages())
-                .currentPage(validatedPage)
+                .currentPage(page)
                 .dailyLogs(dailyLogs)
                 .expenses(expenses)
                 .build();

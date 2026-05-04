@@ -7,9 +7,12 @@ import com.feellog.backend.domain.report.dto.response.MonthlyExpenseDetailRespon
 import com.feellog.backend.domain.report.dto.response.MonthlyReportResponse;
 import com.feellog.backend.domain.report.dto.response.WeeklyReportResponse;
 import com.feellog.backend.domain.report.service.ReportService;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,29 +22,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/reports")
 @RequiredArgsConstructor
+@Validated
 public class ReportController {
 
     private final ReportService reportService;
 
-    @GetMapping("/monthly")
-    public ResponseEntity<MonthlyReportResponse> getMonthlyReport(
-            @AuthenticationPrincipal Long userId,
-            @RequestParam int year,
-            @RequestParam int month
+    @GetMapping("/daily")
+    public ResponseEntity<DailyReportResponse> getDailyReport(
+            @AuthenticationPrincipal Long userId
     ) {
-        return ResponseEntity.ok(reportService.getMonthlyReport(userId, year, month));
-    }
-
-    @GetMapping("/monthly/expenses")
-    public ResponseEntity<MonthlyExpenseDetailResponse> getMonthlyExpenseDetail(
-            @AuthenticationPrincipal Long userId,
-            @RequestParam int year,
-            @RequestParam int month,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "LATEST") String sort
-    ) {
-        return ResponseEntity.ok(reportService.getMonthlyExpenseDetail(userId, year, month, page, size, sort));
+        return ResponseEntity.ok(reportService.getDailyReport(userId));
     }
 
     @GetMapping("/weekly")
@@ -51,14 +41,35 @@ public class ReportController {
         return ResponseEntity.ok(reportService.getWeeklyReport(userId));
     }
 
+    @GetMapping("/monthly")
+    public ResponseEntity<MonthlyReportResponse> getMonthlyReport(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam @Min(1) @Max(9999) int year,
+            @RequestParam @Min(1) @Max(12) int month
+    ) {
+        return ResponseEntity.ok(reportService.getMonthlyReport(userId, year, month));
+    }
+
+    @GetMapping("/monthly/expenses")
+    public ResponseEntity<MonthlyExpenseDetailResponse> getMonthlyExpenseDetail(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam @Min(1) @Max(9999) int year,
+            @RequestParam @Min(1) @Max(12) int month,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
+            @RequestParam(defaultValue = "LATEST") String sort
+    ) {
+        return ResponseEntity.ok(reportService.getMonthlyExpenseDetail(userId, year, month, page, size, sort));
+    }
+
     @GetMapping("/categories/{categoryId}/expenses")
     public ResponseEntity<CategoryDetailResponse> getCategoryDetail(
             @AuthenticationPrincipal Long userId,
             @PathVariable Long categoryId,
-            @RequestParam int year,
-            @RequestParam int month,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam @Min(1) @Max(9999) int year,
+            @RequestParam @Min(1) @Max(12) int month,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "LATEST") String sort
     ) {
         return ResponseEntity.ok(reportService.getCategoryDetail(userId, categoryId, year, month, page, size, sort));
@@ -68,19 +79,12 @@ public class ReportController {
     public ResponseEntity<EmotionDetailResponse> getEmotionDetail(
             @AuthenticationPrincipal Long userId,
             @PathVariable Long emotionId,
-            @RequestParam int year,
-            @RequestParam int month,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam @Min(1) @Max(9999) int year,
+            @RequestParam @Min(1) @Max(12) int month,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "LATEST") String sort
     ) {
         return ResponseEntity.ok(reportService.getEmotionDetail(userId, emotionId, year, month, page, size, sort));
-    }
-
-    @GetMapping("/daily")
-    public ResponseEntity<DailyReportResponse> getDailyReport(
-            @AuthenticationPrincipal Long userId
-    ) {
-        return ResponseEntity.ok(reportService.getDailyReport(userId));
     }
 }
