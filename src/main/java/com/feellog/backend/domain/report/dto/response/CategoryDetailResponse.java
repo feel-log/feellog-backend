@@ -38,6 +38,7 @@ public record CategoryDetailResponse(
     public record ExpenseDto(
             Long expenseId,
             LocalDate date,
+            String dayOfWeek,
             String memo,
             Long amount,
             String paymentMethod,

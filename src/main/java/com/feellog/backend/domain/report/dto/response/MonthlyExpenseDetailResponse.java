@@ -31,6 +31,7 @@ public record MonthlyExpenseDetailResponse(
     public record ExpenseDto(
             Long expenseId,
             LocalDate date,
+            String dayOfWeek,
             String categoryName,
             String memo,
             Long amount,

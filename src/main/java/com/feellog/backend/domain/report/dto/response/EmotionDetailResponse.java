@@ -38,6 +38,7 @@ public record EmotionDetailResponse(
     public record ExpenseDto(
             Long expenseId,
             LocalDate date,
+            String dayOfWeek,
             String categoryName,
             String memo,
             Long amount,

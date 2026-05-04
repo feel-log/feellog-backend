@@ -527,7 +527,14 @@ public class ReportService {
                     ));
 
             dailyLogs = groupedByDate.entrySet().stream()
-                    .map(entry -> new MonthlyExpenseDetailResponse.DailyLogDto(entry.getKey(), entry.getValue()))
+                    .map(entry -> {
+                        LocalDate date = entry.getKey();
+                        List<MonthlyExpenseDetailResponse.ExpenseDto> expenseList = entry.getValue();
+                        return MonthlyExpenseDetailResponse.DailyLogDto.builder()
+                                .date(date)
+                                .expenses(expenseList)
+                                .build();
+                    })
                     .toList();
         }
 
@@ -546,6 +553,7 @@ public class ReportService {
         return MonthlyExpenseDetailResponse.ExpenseDto.builder()
                 .expenseId(e.getId())
                 .date(e.getExpenseDate())
+                .dayOfWeek(e.getExpenseDate().getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.KOREAN))
                 .categoryName(e.getCategory().getName())
                 .memo(e.getMemo())
                 .amount(e.getAmount().longValue())
@@ -625,7 +633,14 @@ public class ReportService {
                     ));
 
             dailyLogs = groupedByDate.entrySet().stream()
-                    .map(entry -> new CategoryDetailResponse.DailyLogDto(entry.getKey(), entry.getValue()))
+                    .map(entry -> {
+                        LocalDate date = entry.getKey();
+                        List<CategoryDetailResponse.ExpenseDto> expenseList = entry.getValue();
+                        return CategoryDetailResponse.DailyLogDto.builder()
+                                .date(date)
+                                .expenses(expenseList)
+                                .build();
+                    })
                     .toList();
         }
 
@@ -648,6 +663,7 @@ public class ReportService {
         return CategoryDetailResponse.ExpenseDto.builder()
                 .expenseId(e.getId())
                 .date(e.getExpenseDate())
+                .dayOfWeek(e.getExpenseDate().getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.KOREAN))
                 .memo(e.getMemo())
                 .amount(e.getAmount().longValue())
                 .paymentMethod(e.getPaymentMethod().getName())
@@ -722,7 +738,14 @@ public class ReportService {
                     ));
 
             dailyLogs = groupedByDate.entrySet().stream()
-                    .map(entry -> new EmotionDetailResponse.DailyLogDto(entry.getKey(), entry.getValue()))
+                    .map(entry -> {
+                        LocalDate date = entry.getKey();
+                        List<EmotionDetailResponse.ExpenseDto> expenseList = entry.getValue();
+                        return EmotionDetailResponse.DailyLogDto.builder()
+                                .date(date)
+                                .expenses(expenseList)
+                                .build();
+                    })
                     .toList();
         }
 
@@ -745,6 +768,7 @@ public class ReportService {
         return EmotionDetailResponse.ExpenseDto.builder()
                 .expenseId(e.getId())
                 .date(e.getExpenseDate())
+                .dayOfWeek(e.getExpenseDate().getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.KOREAN))
                 .categoryName(e.getCategory().getName())
                 .memo(e.getMemo())
                 .amount(e.getAmount().longValue())
