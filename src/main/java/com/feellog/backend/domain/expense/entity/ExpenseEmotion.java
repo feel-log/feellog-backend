@@ -1,15 +1,18 @@
 package com.feellog.backend.domain.expense.entity;
 
-import com.feellog.backend.domain.emotion.entity.Emotion;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+import com.feellog.backend.domain.emotion.entity.Emotion;
+
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor(access = AccessLevel.PUBLIC)
 @Entity
 @Table(
         name = "expense_emotion",

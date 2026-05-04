@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -26,4 +28,7 @@ public class EmotionGroup {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+    
+    @OneToMany(mappedBy = "emotionGroup", fetch = FetchType.LAZY)
+    private List<Emotion> emotions = new ArrayList<>();
 }

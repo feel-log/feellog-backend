@@ -10,13 +10,10 @@ import com.feellog.backend.domain.expense.entity.ExpenseSituationTag;
 import com.feellog.backend.domain.income.entity.Income;
 import com.feellog.backend.domain.report.dto.CategoryAmountDto;
 
-import com.feellog.backend.domain.report.dto.projection.CategoryExpenseSummary;
-import com.feellog.backend.domain.report.dto.projection.EmotionSummary;
 import com.feellog.backend.domain.report.dto.response.CategoryDetailResponse;
 import com.feellog.backend.domain.report.dto.response.CategoryStatDto;
 import com.feellog.backend.domain.report.dto.response.CommentDto;
 import com.feellog.backend.domain.report.dto.response.CommentsDto;
-import com.feellog.backend.domain.report.dto.response.DailyReportResponse;
 import com.feellog.backend.domain.report.dto.response.EmotionDetailResponse;
 import com.feellog.backend.domain.report.dto.response.EmotionStatDto;
 import com.feellog.backend.domain.report.dto.response.MonthlyReportResponse;
@@ -39,7 +36,6 @@ import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.time.format.TextStyle;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,15 +43,12 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class ReportService {
 
     private final ReportRepository reportRepository;
@@ -63,6 +56,7 @@ public class ReportService {
     private final CategoryRepository categoryRepository;
     private final EmotionRepository emotionRepository;
 
+    @Transactional(readOnly = true)
     public WeeklyReportResponse getWeeklyReport(Long userId) {
         // 기간 계산 (일요일 ~ 토요일)
         LocalDate today = LocalDate.now();
@@ -100,6 +94,7 @@ public class ReportService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
     public MonthlyReportResponse getMonthlyReport(Long userId, int year, int month) {
 
         // 기간 계산
@@ -465,6 +460,7 @@ public class ReportService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
     public CategoryDetailResponse getCategoryDetail(Long userId, Long categoryId, int year, int month, int page, int size, String sort) {
 
         // 카테고리 Id 검증
@@ -570,6 +566,7 @@ public class ReportService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
     public EmotionDetailResponse getEmotionDetail(Long userId, Long emotionId, int year, int month, int page, int size, String sort) {
 
         Emotion emotion = emotionRepository.findById(emotionId)
@@ -662,154 +659,6 @@ public class ReportService {
                                 est.getSituationTag().getId(),
                                 est.getSituationTag().getName()))
                         .toList())
-                .build();
-    }
-
-    public DailyReportResponse getDailyReport(Long userId) {
-        LocalDate today = LocalDate.now();
-
-        BigDecimal totalAmount = reportRepository.findTotalExpenseByDate(userId, today);
-        List<CategoryExpenseSummary> categories = reportRepository.findCategoryExpenseSummaryByDate(userId, today);
-        List<EmotionSummary> emotions = reportRepository.findEmotionSummaryByDate(userId, today);
-
-        String date = today.toString();
-        String dayOfWeek = today.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.KOREAN);
-        long total = totalAmount.longValue();
-
-        return DailyReportResponse.builder()
-                .period(DailyReportResponse.Period.builder()
-                        .date(date)
-                        .dayOfWeek(dayOfWeek)
-                        .build())
-                .summary(DailyReportResponse.Summary.builder()
-                        .totalExpenseAmount(total)
-                        .build())
-                .expenseGraph(buildExpenseGraph(categories, total))
-                .emotions(buildEmotions(emotions))
-                .build();
-    }
-
-    private DailyReportResponse.ExpenseGraph buildExpenseGraph(
-            List<CategoryExpenseSummary> categories,
-            long total
-    ) {
-        if (categories.isEmpty() || total == 0) return null;
-
-        BigDecimal maxAmount = categories.get(0).getTotal();
-
-        List<CategoryExpenseSummary> topCategories = categories.stream()
-                .filter(c -> c.getTotal().compareTo(maxAmount) == 0)
-                .toList();
-
-        boolean allEqual = topCategories.size() == categories.size();
-        String displayType = resolveDisplayType(topCategories.size(), allEqual);
-        String mainMessage = resolveMainMessage(displayType, topCategories);
-
-        BigDecimal topSum = topCategories.stream()
-                .map(CategoryExpenseSummary::getTotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        int topRatio = topSum
-                .multiply(BigDecimal.valueOf(100))
-                .divide(BigDecimal.valueOf(total), 0, RoundingMode.HALF_UP)
-                .intValue();
-
-        String subMessage = resolveSubMessage(displayType, topCategories, topRatio);
-        int extraCount = topCategories.size() >= 3 ? topCategories.size() - 2 : 0;
-        List<DailyReportResponse.ExpenseGraph.TopCategory> topCategoryList = topCategories.stream()
-                .limit(2)
-                .map(c -> DailyReportResponse.ExpenseGraph.TopCategory.builder()
-                        .label(c.getName())
-                        .amount(c.getTotal().longValue())
-                        .build())
-                .toList();
-
-        Set<Long> topIds = topCategories.stream()
-                .map(CategoryExpenseSummary::getCategoryId)
-                .collect(Collectors.toSet());
-
-        DailyReportResponse.ExpenseGraph.SecondCategory secondCategory = categories.stream()
-                .filter(c -> !topIds.contains(c.getCategoryId()))
-                .findFirst()
-                .map(c -> DailyReportResponse.ExpenseGraph.SecondCategory.builder()
-                        .label(c.getName())
-                        .amount(c.getTotal().longValue())
-                        .build())
-                .orElse(null);
-
-        return DailyReportResponse.ExpenseGraph.builder()
-                .displayType(displayType)
-                .mainMessage(mainMessage)
-                .subMessage(subMessage)
-                .topRatio(topRatio)
-                .topCategories(topCategoryList)
-                .secondCategory(secondCategory)
-                .extraCount(extraCount)
-                .build();
-    }
-
-    private String resolveDisplayType(int topCount, boolean allEqual) {
-        if (allEqual) return "ALL_EQUAL";
-        return switch (topCount) {
-            case 1 -> "SINGLE";
-            case 2 -> "DUAL";
-            default -> "MULTIPLE";
-        };
-    }
-
-    private String resolveMainMessage(String displayType, List<CategoryExpenseSummary> topCategories) {
-        return switch (displayType) {
-            case "SINGLE" -> "오늘은 %s에 가장 많이 지출했어요"
-                    .formatted(topCategories.get(0).getName());
-            case "DUAL" -> "오늘은 %s와 %s에 가장 많이 지출했어요"
-                    .formatted(topCategories.get(0).getName(), topCategories.get(1).getName());
-            case "MULTIPLE" -> "%s, %s 외 %d개 항목에 동일하게 지출했어요"
-                    .formatted(
-                            topCategories.get(0).getName(),
-                            topCategories.get(1).getName(),
-                            topCategories.size() - 2
-                    );
-            case "ALL_EQUAL" -> "오늘은 여러 항목에 동일한 금액을 지출했어요";
-            default -> "";
-        };
-    }
-
-    private String resolveSubMessage(String displayType, List<CategoryExpenseSummary> topCategories, int topRatio) {
-        if (displayType.equals("ALL_EQUAL") || topRatio == 100) {
-            return "소비가 여러 항목에 고르게 나뉘어 있어요";
-        }
-        return switch (displayType) {
-            case "SINGLE" -> "%s 지출이 전체의 %d%%를 차지해요"
-                    .formatted(topCategories.get(0).getName(), topRatio);
-            case "DUAL" -> "두 항목이 전체의 %d%%를 차지해요".formatted(topRatio);
-            case "MULTIPLE" -> "해당 항목들이 전체의 %d%%를 차지해요".formatted(topRatio);
-            default -> "";
-        };
-    }
-
-    private DailyReportResponse.Emotions buildEmotions(List<EmotionSummary> emotions) {
-        if (emotions.isEmpty()) {
-            return DailyReportResponse.Emotions.builder()
-                    .list(List.of())
-                    .isEmpty(true)
-                    .build();
-        }
-
-        List<DailyReportResponse.Emotions.EmotionItem> list = new ArrayList<>();
-        for (int i = 0; i < emotions.size(); i++) {
-            EmotionSummary e = emotions.get(i);
-            list.add(DailyReportResponse.Emotions.EmotionItem.builder()
-                    .emotionId(e.getEmotionId())
-                    .emotionName(e.getName())
-                    .emotionGroupName(e.getEmotionGroupName())
-                    .emotionCount(e.getEmotionCount())
-                    .rank(i + 1)
-                    .build());
-        }
-
-        return DailyReportResponse.Emotions.builder()
-                .list(list)
-                .isEmpty(false)
                 .build();
     }
 }

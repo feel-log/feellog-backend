@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -26,4 +28,7 @@ public class CategoryGroup {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+    
+    @OneToMany(mappedBy = "categoryGroup", fetch = FetchType.LAZY)
+    private List<Category> categories = new ArrayList<>();
 }
