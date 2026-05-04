@@ -5,6 +5,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import static com.feellog.backend.global.exception.ErrorCode.INVALID_INPUT;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -20,6 +22,6 @@ public class GlobalExceptionHandler {
         String message = e.getBindingResult().getAllErrors().get(0).getDefaultMessage();
         return ResponseEntity
                 .badRequest()
-                .body(new ErrorResponse(ErrorCode.INVALID_INPUT.name(), message));
+                .body(new ErrorResponse(INVALID_INPUT.name(), message));
     }
 }
