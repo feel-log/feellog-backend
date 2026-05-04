@@ -3,6 +3,7 @@ package com.feellog.backend.domain.report.controller;
 import com.feellog.backend.domain.report.dto.response.CategoryDetailResponse;
 import com.feellog.backend.domain.report.dto.response.DailyReportResponse;
 import com.feellog.backend.domain.report.dto.response.EmotionDetailResponse;
+import com.feellog.backend.domain.report.dto.response.MonthlyExpenseDetailResponse;
 import com.feellog.backend.domain.report.dto.response.MonthlyReportResponse;
 import com.feellog.backend.domain.report.dto.response.WeeklyReportResponse;
 import com.feellog.backend.domain.report.service.ReportService;
@@ -29,6 +30,18 @@ public class ReportController {
             @RequestParam int month
     ) {
         return ResponseEntity.ok(reportService.getMonthlyReport(userId, year, month));
+    }
+
+    @GetMapping("/monthly/expenses")
+    public ResponseEntity<MonthlyExpenseDetailResponse> getMonthlyExpenseDetail(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam int year,
+            @RequestParam int month,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "LATEST") String sort
+    ) {
+        return ResponseEntity.ok(reportService.getMonthlyExpenseDetail(userId, year, month, page, size, sort));
     }
 
     @GetMapping("/weekly")

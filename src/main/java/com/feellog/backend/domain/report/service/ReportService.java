@@ -19,6 +19,7 @@ import com.feellog.backend.domain.report.dto.response.CommentsDto;
 import com.feellog.backend.domain.report.dto.response.DailyReportResponse;
 import com.feellog.backend.domain.report.dto.response.EmotionDetailResponse;
 import com.feellog.backend.domain.report.dto.response.EmotionStatDto;
+import com.feellog.backend.domain.report.dto.response.MonthlyExpenseDetailResponse;
 import com.feellog.backend.domain.report.dto.response.MonthlyReportResponse;
 import com.feellog.backend.domain.report.dto.response.SituationStatDto;
 import com.feellog.backend.domain.report.dto.response.WeeklyReportResponse;
@@ -465,6 +466,98 @@ public class ReportService {
                 .build();
     }
 
+    public MonthlyExpenseDetailResponse getMonthlyExpenseDetail(Long userId, int year, int month, int page, int size, String sort) {
+
+        Sort sortOption = switch (sort) {
+            case "OLDEST" -> Sort.by(
+                    Sort.Order.asc("expenseDate"),
+                    Sort.Order.asc("expenseTime").nullsLast(),
+                    Sort.Order.asc("createdAt")
+            );
+            case "AMOUNT_HIGH" -> Sort.by(
+                    Sort.Order.desc("amount"),
+                    Sort.Order.desc("expenseDate"),
+                    Sort.Order.desc("expenseTime").nullsLast(),
+                    Sort.Order.desc("createdAt")
+            );
+            case "AMOUNT_LOW" -> Sort.by(
+                    Sort.Order.asc("amount"),
+                    Sort.Order.desc("expenseDate"),
+                    Sort.Order.desc("expenseTime").nullsLast(),
+                    Sort.Order.desc("createdAt")
+            );
+            default -> Sort.by(
+                    Sort.Order.desc("expenseDate"),
+                    Sort.Order.desc("expenseTime").nullsLast(),
+                    Sort.Order.desc("createdAt")
+            );
+        };
+
+        int validatedPage = Math.max(1, page);
+        Pageable pageable = PageRequest.of(validatedPage - 1, size, sortOption);
+
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+
+        Page<Expense> expensePage = reportRepository.findExpensesPageByUserAndPeriod(userId, startDate, endDate, pageable);
+
+        long totalAmount = reportRepository.findTotalAmountByUserAndPeriod(userId, startDate, endDate).longValue();
+
+        List<MonthlyExpenseDetailResponse.DailyLogDto> dailyLogs = null;
+        List<MonthlyExpenseDetailResponse.ExpenseDto> expenses = null;
+
+        if (sort.equals("AMOUNT_HIGH") || sort.equals("AMOUNT_LOW")) {
+            expenses = expensePage.getContent().stream()
+                    .map(this::mapToMonthlyExpenseDto)
+                    .toList();
+        } else {
+            Map<LocalDate, List<MonthlyExpenseDetailResponse.ExpenseDto>> groupedByDate = expensePage.getContent().stream()
+                    .collect(Collectors.groupingBy(
+                            Expense::getExpenseDate,
+                            LinkedHashMap::new,
+                            Collectors.mapping(this::mapToMonthlyExpenseDto, Collectors.toList())
+                    ));
+
+            dailyLogs = groupedByDate.entrySet().stream()
+                    .map(entry -> new MonthlyExpenseDetailResponse.DailyLogDto(entry.getKey(), entry.getValue()))
+                    .toList();
+        }
+
+        return MonthlyExpenseDetailResponse.builder()
+                .period(new MonthlyExpenseDetailResponse.PeriodDto(startDate, endDate))
+                .totalAmount(totalAmount)
+                .totalElements((int) expensePage.getTotalElements())
+                .totalPages(expensePage.getTotalPages())
+                .currentPage(validatedPage)
+                .dailyLogs(dailyLogs)
+                .expenses(expenses)
+                .build();
+    }
+
+    private MonthlyExpenseDetailResponse.ExpenseDto mapToMonthlyExpenseDto(Expense e) {
+        return MonthlyExpenseDetailResponse.ExpenseDto.builder()
+                .expenseId(e.getId())
+                .date(e.getExpenseDate())
+                .categoryName(e.getCategory().getName())
+                .memo(e.getMemo())
+                .amount(e.getAmount().longValue())
+                .paymentMethod(e.getPaymentMethod().getName())
+                .emotions(e.getExpenseEmotions().stream()
+                        .sorted(Comparator.comparing(ee -> ee.getEmotion().getId()))
+                        .map(ee -> new MonthlyExpenseDetailResponse.EmotionDto(
+                                ee.getEmotion().getId(),
+                                ee.getEmotion().getName()))
+                        .toList())
+                .situationTags(e.getExpenseSituationTags().stream()
+                        .sorted(Comparator.comparing(est -> est.getSituationTag().getId()))
+                        .map(est -> new MonthlyExpenseDetailResponse.SituationTagDto(
+                                est.getSituationTag().getId(),
+                                est.getSituationTag().getName()))
+                        .toList())
+                .build();
+    }
+
     public CategoryDetailResponse getCategoryDetail(Long userId, Long categoryId, int year, int month, int page, int size, String sort) {
 
         // 카테고리 Id 검증
@@ -508,9 +601,7 @@ public class ReportService {
         Page<Expense> expensePage = reportRepository.findExpensesByCategoryAndPeriod(userId, categoryId, startDate, endDate, pageable);
 
         // 총 지출 합산
-        long totalAmount = Optional.ofNullable(reportRepository.findTotalAmountByCategoryAndPeriod(userId, categoryId, startDate, endDate))
-                .map(BigDecimal::longValue)
-                .orElse(0L);
+        long totalAmount = reportRepository.findTotalAmountByCategoryAndPeriod(userId, categoryId, startDate, endDate).longValue();
 
         // 데이터가 없을 경우
         List<CategoryDetailResponse.DailyLogDto> dailyLogs = null;
@@ -609,9 +700,7 @@ public class ReportService {
 
         Page<Expense> expensePage = reportRepository.findExpensesByEmotionAndPeriod(userId, emotionId, startDate, endDate, pageable);
 
-        long totalAmount = Optional.ofNullable(reportRepository.findTotalAmountByEmotionAndPeriod(userId, emotionId, startDate, endDate))
-                .map(BigDecimal::longValue)
-                .orElse(0L);
+        long totalAmount = reportRepository.findTotalAmountByEmotionAndPeriod(userId, emotionId, startDate, endDate).longValue();
 
         List<EmotionDetailResponse.DailyLogDto> dailyLogs = null;
         List<EmotionDetailResponse.ExpenseDto> expenses = null;
