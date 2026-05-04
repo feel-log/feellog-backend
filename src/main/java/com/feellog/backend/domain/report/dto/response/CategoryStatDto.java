@@ -6,7 +6,6 @@ import lombok.Builder;
 public record CategoryStatDto(
         Long categoryId,
         String categoryName,
-        String categoryGroupName,
         Long totalAmount,
         Double shareRate,
         Integer shareRateDisplay,

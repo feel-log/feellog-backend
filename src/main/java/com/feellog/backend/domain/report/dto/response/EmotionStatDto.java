@@ -6,7 +6,6 @@ import lombok.Builder;
 public record EmotionStatDto(
         Long emotionId,
         String emotionName,
-        String emotionGroupName,
         Long linkedAmount,
         Integer emotionCount,
         Integer rank

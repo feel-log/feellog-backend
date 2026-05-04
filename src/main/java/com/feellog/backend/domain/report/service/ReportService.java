@@ -39,6 +39,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.TextStyle;
 import java.time.temporal.TemporalAdjusters;
@@ -50,7 +51,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -168,12 +168,17 @@ public class ReportService {
         if (totalExpense == 0) return Collections.emptyList();
 
         Map<Long, Expense> categorySampleMap = new HashMap<>();
-        Map<Long, Long> categoryAmountMap = new HashMap<>();
+        Map<Long, Long> categoryAmountMap = new HashMap<>();    // 카테고리별 금액 합계
+        Map<Long, Integer> categoryCountMap = new HashMap<>();  // 카테고리별 건수
+        Map<Long, LocalDateTime> categoryLatestMap = new HashMap<>();   // 카테고리별 최근 지출
 
         for (Expense e : expenses) {
             Long categoryId = e.getCategory().getId();
             categorySampleMap.putIfAbsent(categoryId, e);
             categoryAmountMap.merge(categoryId, e.getAmount().longValue(), Long::sum);
+            categoryCountMap.merge(categoryId, 1, Integer::sum);  // 건수 집계
+            categoryLatestMap.merge(categoryId, e.getCreatedAt(),
+                    (existing, newVal) -> newVal.isAfter(existing) ? newVal : existing); // 최근 지출
         }
 
         // 비율 계산
@@ -193,7 +198,7 @@ public class ReportService {
                         a.getValue()[0] - a.getValue()[1]
                 ))
                 .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+                .toList();
 
         for (int i = 0; i < remainder; i++) {
             rawRateMap.get(sortedByRemainder.get(i))[1]++;
@@ -202,9 +207,16 @@ public class ReportService {
         // 정렬 및 순위 부여
         List<Map.Entry<Long, Long>> sorted = new ArrayList<>(categoryAmountMap.entrySet());
         sorted.sort((a, b) -> {
-            int cmp = Long.compare(b.getValue(), a.getValue());
+            int cmp = Long.compare(b.getValue(), a.getValue()); // 금액 내림차순
             if (cmp != 0) return cmp;
-            return Long.compare(a.getKey(), b.getKey()); // 동순위 시 categoryId 오름차순
+            int countCmp = Integer.compare(
+                    categoryCountMap.get(b.getKey()),
+                    categoryCountMap.get(a.getKey())); // 건수 내림차순
+            if (countCmp != 0) return countCmp;
+            int dateCmp = categoryLatestMap.get(b.getKey())
+                    .compareTo(categoryLatestMap.get(a.getKey())); // 최근 지출 순
+            if (dateCmp != 0) return dateCmp;
+            return Long.compare(a.getKey(), b.getKey()); // 기본 카테고리 순
         });
 
         List<CategoryStatDto> result = new ArrayList<>();
@@ -231,7 +243,8 @@ public class ReportService {
     private List<EmotionStatDto> buildEmotionStats(List<Expense> expenses) {
         Map<Long, Long> emotionAmountMap = new HashMap<>();
         Map<Long, Integer> emotionCountMap = new HashMap<>();
-        Map<Long, String[]> emotionMetaMap = new HashMap<>();
+        Map<Long, String> emotionNameMap = new HashMap<>();
+        Map<Long, LocalDateTime> emotionLatestMap = new HashMap<>();  // 최근 지출 순
 
         for (Expense expense : expenses) {
             long amount = expense.getAmount().longValue();
@@ -239,18 +252,24 @@ public class ReportService {
                 Long emotionId = ee.getEmotion().getId();
                 emotionAmountMap.merge(emotionId, amount, Long::sum);
                 emotionCountMap.merge(emotionId, 1, Integer::sum);
-                emotionMetaMap.putIfAbsent(emotionId, new String[]{
-                        ee.getEmotion().getName(),
-                        ee.getEmotion().getEmotionGroup().getName()
-                });
+                emotionNameMap.putIfAbsent(emotionId, ee.getEmotion().getName());
+                emotionLatestMap.merge(emotionId, expense.getCreatedAt(),
+                        (existing, newVal) -> newVal.isAfter(existing) ? newVal : existing);
             }
         }
 
         List<Map.Entry<Long, Long>> sorted = new ArrayList<>(emotionAmountMap.entrySet());
         sorted.sort((a, b) -> {
-            int cmp = Long.compare(b.getValue(), a.getValue());
+            int cmp = Long.compare(b.getValue(), a.getValue()); // 금액 내림차순
             if (cmp != 0) return cmp;
-            return Long.compare(a.getKey(), b.getKey()); // 동순위 시 emotionId 오름차순
+            int countCmp = Integer.compare(
+                    emotionCountMap.get(b.getKey()),
+                    emotionCountMap.get(a.getKey())); // 건수 내림차순
+            if (countCmp != 0) return countCmp;
+            int dateCmp = emotionLatestMap.get(b.getKey())
+                    .compareTo(emotionLatestMap.get(a.getKey())); // 최근 지출 순
+            if (dateCmp != 0) return dateCmp;
+            return Long.compare(a.getKey(), b.getKey()); // 기본 감정 노출 순
         });
 
         List<EmotionStatDto> result = new ArrayList<>();
@@ -258,12 +277,10 @@ public class ReportService {
         for (int i = 0; i < sorted.size(); i++) {
             if (i > 0 && sorted.get(i).getValue() < sorted.get(i - 1).getValue()) rank = i + 1;
             Long emotionId = sorted.get(i).getKey();
-            String[] meta = emotionMetaMap.get(emotionId);
 
             result.add(EmotionStatDto.builder()
                     .emotionId(emotionId)
-                    .emotionName(meta[0])
-                    .emotionGroupName(meta[1])
+                    .emotionName(emotionNameMap.get(emotionId))
                     .linkedAmount(sorted.get(i).getValue())
                     .emotionCount(emotionCountMap.get(emotionId))
                     .rank(rank)
@@ -275,7 +292,8 @@ public class ReportService {
     private List<SituationStatDto> buildSituationStats(List<Expense> expenses) {
         Map<Long, Integer> situationCountMap = new HashMap<>();
         Map<Long, String> situationNameMap = new HashMap<>();
-        Map<Long, Long> situationAmountMap = new HashMap<>();  // 금액 집계용
+        Map<Long, Long> situationAmountMap = new HashMap<>();
+        Map<Long, LocalDateTime> situationLatestMap = new HashMap<>();  // 최근 지출 순
 
         for (Expense expense : expenses) {
             long amount = expense.getAmount().longValue();
@@ -283,21 +301,24 @@ public class ReportService {
                 Long tagId = est.getSituationTag().getId();
                 situationCountMap.merge(tagId, 1, Integer::sum);
                 situationNameMap.putIfAbsent(tagId, est.getSituationTag().getName());
-                situationAmountMap.merge(tagId, amount, Long::sum);  // 금액 합산
+                situationAmountMap.merge(tagId, amount, Long::sum);
+                situationLatestMap.merge(tagId, expense.getCreatedAt(),
+                        (existing, newVal) -> newVal.isAfter(existing) ? newVal : existing);
             }
         }
 
-        // 건수 내림차순 → 동순위면 금액 내림차순 → 그 다음 situationTagId 오름차순
         List<Map.Entry<Long, Integer>> sorted = new ArrayList<>(situationCountMap.entrySet());
         sorted.sort((a, b) -> {
-            int cmp = Integer.compare(b.getValue(), a.getValue());
+            int cmp = Integer.compare(b.getValue(), a.getValue()); // 건수 내림차순
             if (cmp != 0) return cmp;
             int amountCmp = Long.compare(
                     situationAmountMap.get(b.getKey()),
-                    situationAmountMap.get(a.getKey())
-            );
+                    situationAmountMap.get(a.getKey())); // 금액 내림차순
             if (amountCmp != 0) return amountCmp;
-            return Long.compare(a.getKey(), b.getKey()); // 동순위 시 situationTagId 오름차순
+            int dateCmp = situationLatestMap.get(b.getKey())
+                    .compareTo(situationLatestMap.get(a.getKey())); // 최근 지출 순
+            if (dateCmp != 0) return dateCmp;
+            return Long.compare(a.getKey(), b.getKey()); // 기본 상황 태그 노출 순
         });
 
         List<SituationStatDto> result = new ArrayList<>();
@@ -370,27 +391,14 @@ public class ReportService {
             return CommentDto.builder()
                     .type("TIE")
                     .targetName(null)
-                    .message("이번 달 소비 변화는 한 곳보다 여러 카테고리에서 두드러졌어요")
+                    .message("이번 달엔 여러 지출 항목에서 비슷한 변화가 있었어요")
                     .build();
         }
-
-        // 증감률 계산
-        long prev = prevCategoryMap.getOrDefault(maxChanged.categoryId(), 0L);
-        long diffAmount = maxChanged.totalAmount() - prev;
-        double diffRate = prev > 0
-                ? BigDecimal.valueOf((double) diffAmount / prev * 100)
-                .setScale(0, RoundingMode.HALF_UP)
-                .doubleValue()
-                : 100.0;
-
-        String direction = diffAmount >= 0 ? "늘었어요" : "줄었어요";
-        double absDiffRate = Math.abs(diffRate);
 
         return CommentDto.builder()
                 .type("NORMAL")
                 .targetName(maxChanged.categoryName())
-                .message("지난달보다 " + maxChanged.categoryName() + " 지출이 "
-                        + (int) absDiffRate + "% " + direction)
+                .message("이번 달 가장 크게 변한 지출은 " + maxChanged.categoryName() + "예요")
                 .build();
     }
 
@@ -445,7 +453,7 @@ public class ReportService {
                     .build();
         }
 
-        int maxCount = situationList.get(0).occurrenceCount();
+        int maxCount = situationList.getFirst().occurrenceCount();
         long tieCount = situationList.stream()
                 .filter(s -> s.occurrenceCount() == maxCount)
                 .count();
@@ -458,7 +466,7 @@ public class ReportService {
                     .build();
         }
 
-        String situationName = situationList.get(0).situationName();
+        String situationName = situationList.getFirst().situationName();
         return CommentDto.builder()
                 .type("NORMAL")
                 .targetName(situationName)
@@ -784,7 +792,7 @@ public class ReportService {
     ) {
         if (categories.isEmpty() || total == 0) return null;
 
-        BigDecimal maxAmount = categories.get(0).getTotal();
+        BigDecimal maxAmount = categories.getFirst().getTotal();
 
         List<CategoryExpenseSummary> topCategories = categories.stream()
                 .filter(c -> c.getTotal().compareTo(maxAmount) == 0)
@@ -869,7 +877,7 @@ public class ReportService {
         }
         return switch (displayType) {
             case "SINGLE" -> "%s 지출이 전체의 %d%%를 차지해요"
-                    .formatted(topCategories.get(0).getName(), topRatio);
+                    .formatted(topCategories.getFirst().getName(), topRatio);
             case "DUAL" -> "두 항목이 전체의 %d%%를 차지해요".formatted(topRatio);
             case "MULTIPLE" -> "해당 항목들이 전체의 %d%%를 차지해요".formatted(topRatio);
             default -> "";
@@ -890,7 +898,6 @@ public class ReportService {
             list.add(DailyReportResponse.Emotions.EmotionItem.builder()
                     .emotionId(e.getEmotionId())
                     .emotionName(e.getName())
-                    .emotionGroupName(e.getEmotionGroupName())
                     .emotionCount(e.getEmotionCount())
                     .rank(i + 1)
                     .build());

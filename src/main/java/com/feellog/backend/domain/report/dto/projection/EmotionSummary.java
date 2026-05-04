@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
 public interface EmotionSummary {
     Long getEmotionId();
     String getName();
-    String getEmotionGroupName();
     long getEmotionCount();
     BigDecimal getLinkedAmount();
     LocalDateTime getLastUsedAt();

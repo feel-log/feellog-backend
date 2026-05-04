@@ -19,7 +19,6 @@ public interface ReportRepository extends JpaRepository<Expense, Long> {
     @Query("""
         SELECT e FROM Expense e
         JOIN FETCH e.category c
-        JOIN FETCH c.categoryGroup
         WHERE e.user.id = :userId
         AND e.expenseDate BETWEEN :startDate AND :endDate
         AND e.isDeleted = false
@@ -158,7 +157,6 @@ public interface ReportRepository extends JpaRepository<Expense, Long> {
     @Query("""
         SELECT ee.emotion.id                AS emotionId,
                ee.emotion.name              AS name,
-               ee.emotion.emotionGroup.name AS emotionGroupName,
                COUNT(ee.expense.id)         AS emotionCount,
                SUM(ee.expense.amount)       AS linkedAmount,
                MAX(ee.createdAt)            AS lastUsedAt
@@ -166,7 +164,7 @@ public interface ReportRepository extends JpaRepository<Expense, Long> {
         WHERE ee.expense.user.id = :userId
           AND ee.expense.expenseDate = :date
           AND ee.expense.isDeleted = false
-        GROUP BY ee.emotion.id, ee.emotion.name, ee.emotion.emotionGroup.name
+        GROUP BY ee.emotion.id, ee.emotion.name
         ORDER BY emotionCount DESC, linkedAmount DESC, lastUsedAt DESC, ee.emotion.id ASC
     """)
     List<EmotionSummary> findEmotionSummaryByDate(
