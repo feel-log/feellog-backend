@@ -2,6 +2,7 @@ package com.feellog.backend.domain.expense.repository;
 
 import com.feellog.backend.domain.expense.entity.Expense;
 import com.feellog.backend.domain.expense.entity.ExpenseSituationTag;
+import com.feellog.backend.domain.situationtag.entity.SituationTag;
 import com.feellog.backend.domain.user.entity.User;
 
 import org.springframework.data.jpa.repository.JpaRepository;
