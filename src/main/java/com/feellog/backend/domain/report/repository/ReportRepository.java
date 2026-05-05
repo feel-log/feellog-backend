@@ -19,7 +19,6 @@ public interface ReportRepository extends JpaRepository<Expense, Long> {
     @Query("""
         SELECT e FROM Expense e
         JOIN FETCH e.category c
-        JOIN FETCH c.categoryGroup
         WHERE e.user.id = :userId
         AND e.expenseDate BETWEEN :startDate AND :endDate
         AND e.isDeleted = false
@@ -56,7 +55,7 @@ public interface ReportRepository extends JpaRepository<Expense, Long> {
             @Param("endDate") LocalDate endDate
     );
 
-    @Query("""
+    @Query(value = """
         SELECT e FROM Expense e
         JOIN FETCH e.category c
         JOIN FETCH e.paymentMethod p
@@ -64,8 +63,14 @@ public interface ReportRepository extends JpaRepository<Expense, Long> {
         AND e.category.id = :categoryId
         AND e.expenseDate BETWEEN :startDate AND :endDate
         AND e.isDeleted = false
+        """,
+                countQuery = """
+        SELECT COUNT(e) FROM Expense e
+        WHERE e.user.id = :userId
+        AND e.category.id = :categoryId
+        AND e.expenseDate BETWEEN :startDate AND :endDate
+        AND e.isDeleted = false
     """)
-
     Page<Expense> findExpensesByCategoryAndPeriod(
             @Param("userId") Long userId,
             @Param("categoryId") Long categoryId,
@@ -75,7 +80,7 @@ public interface ReportRepository extends JpaRepository<Expense, Long> {
     );
 
     @Query("""
-        SELECT SUM(e.amount) FROM Expense e
+        SELECT COALESCE(SUM(e.amount), 0) FROM Expense e
         WHERE e.user.id = :userId
         AND e.category.id = :categoryId
         AND e.expenseDate BETWEEN :startDate AND :endDate
@@ -88,10 +93,18 @@ public interface ReportRepository extends JpaRepository<Expense, Long> {
             @Param("endDate") LocalDate endDate
     );
 
-    @Query("""
+    @Query(value = """
         SELECT e FROM Expense e
         JOIN FETCH e.category c
         JOIN FETCH e.paymentMethod p
+        JOIN e.expenseEmotions ee
+        WHERE e.user.id = :userId
+        AND ee.emotion.id = :emotionId
+        AND e.expenseDate BETWEEN :startDate AND :endDate
+        AND e.isDeleted = false
+        """,
+                countQuery = """
+        SELECT COUNT(e) FROM Expense e
         JOIN e.expenseEmotions ee
         WHERE e.user.id = :userId
         AND ee.emotion.id = :emotionId
@@ -107,7 +120,7 @@ public interface ReportRepository extends JpaRepository<Expense, Long> {
     );
 
     @Query("""
-        SELECT SUM(e.amount) FROM Expense e
+        SELECT COALESCE(SUM(e.amount), 0) FROM Expense e
         JOIN e.expenseEmotions ee
         WHERE e.user.id = :userId
         AND ee.emotion.id = :emotionId
@@ -144,7 +157,6 @@ public interface ReportRepository extends JpaRepository<Expense, Long> {
     @Query("""
         SELECT ee.emotion.id                AS emotionId,
                ee.emotion.name              AS name,
-               ee.emotion.emotionGroup.name AS emotionGroupName,
                COUNT(ee.expense.id)         AS emotionCount,
                SUM(ee.expense.amount)       AS linkedAmount,
                MAX(ee.createdAt)            AS lastUsedAt
@@ -152,7 +164,7 @@ public interface ReportRepository extends JpaRepository<Expense, Long> {
         WHERE ee.expense.user.id = :userId
           AND ee.expense.expenseDate = :date
           AND ee.expense.isDeleted = false
-        GROUP BY ee.emotion.id, ee.emotion.name, ee.emotion.emotionGroup.name
+        GROUP BY ee.emotion.id, ee.emotion.name
         ORDER BY emotionCount DESC, linkedAmount DESC, lastUsedAt DESC, ee.emotion.id ASC
     """)
     List<EmotionSummary> findEmotionSummaryByDate(
@@ -172,4 +184,45 @@ public interface ReportRepository extends JpaRepository<Expense, Long> {
             @Param("userId") Long userId,
             @Param("date") LocalDate date
     );
+
+    // 월 전체 지출 조회 (페이징)
+    @Query(value = """
+        SELECT e FROM Expense e
+        JOIN FETCH e.category c
+        JOIN FETCH e.paymentMethod p
+        WHERE e.user.id = :userId
+        AND e.expenseDate BETWEEN :startDate AND :endDate
+        AND e.isDeleted = false
+        """,
+                countQuery = """
+        SELECT COUNT(e) FROM Expense e
+        WHERE e.user.id = :userId
+        AND e.expenseDate BETWEEN :startDate AND :endDate
+        AND e.isDeleted = false
+    """)
+    Page<Expense> findExpensesPageByUserAndPeriod(
+            @Param("userId") Long userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            Pageable pageable
+    );
+
+    // 월 전체 지출 합계
+    @Query("""
+        SELECT COALESCE(SUM(e.amount), 0) FROM Expense e
+        WHERE e.user.id = :userId
+        AND e.expenseDate BETWEEN :startDate AND :endDate
+        AND e.isDeleted = false
+    """)
+    BigDecimal findTotalAmountByUserAndPeriod(
+            @Param("userId") Long userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+
+
+
+
+
 }

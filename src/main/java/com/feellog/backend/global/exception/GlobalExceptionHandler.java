@@ -1,7 +1,9 @@
 package com.feellog.backend.global.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -21,5 +23,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .badRequest()
                 .body(new ErrorResponse(ErrorCode.INVALID_INPUT.name(), message));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException e) {
+        String message = e.getConstraintViolations().iterator().next().getMessage();
+        return ResponseEntity
+                .badRequest()
+                .body(new ErrorResponse(ErrorCode.INVALID_INPUT.name(), message));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingParams(MissingServletRequestParameterException e) {
+        return ResponseEntity
+                .badRequest()
+                .body(new ErrorResponse(ErrorCode.INVALID_INPUT.name(), e.getParameterName() + " 파라미터가 필요합니다."));
     }
 }

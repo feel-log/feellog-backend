@@ -54,7 +54,6 @@ public record DailyReportResponse(
         public record EmotionItem(
                 Long emotionId,
                 String emotionName,
-                String emotionGroupName,
                 long emotionCount,
                 int rank
         ) {}
