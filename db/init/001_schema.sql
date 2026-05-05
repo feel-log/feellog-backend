@@ -3,10 +3,21 @@
 -- =========================================================
 
 SET NAMES utf8mb4;
+SET character_set_client = utf8mb4;
+SET character_set_connection = utf8mb4;
+SET character_set_results = utf8mb4;
+
 SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS review;
-DROP TABLE IF EXISTS review_result_template;
+
+DROP TABLE IF EXISTS review_guide_phrase;
+DROP TABLE IF EXISTS review_emotion_adjustment_phrase;
+DROP TABLE IF EXISTS review_feedback_phrase;
+DROP TABLE IF EXISTS review_feedback_title_phrase;
+DROP TABLE IF EXISTS review_title_phrase;
+DROP TABLE IF EXISTS review_phrase_group_mapping;
+
 DROP TABLE IF EXISTS review_choice_option;
 
 DROP TABLE IF EXISTS asset;
@@ -377,53 +388,111 @@ CREATE TABLE review_choice_option
     updated_at              DATETIME     NOT NULL
 );
 
+
 -- =========================================================
--- REVIEW RESULT TEMPLATE
+-- REVIEW PHRASE GROUP MAPPING
+-- 원본 선택값 -> 내부 그룹값 매핑
 -- =========================================================
-CREATE TABLE review_result_template
+CREATE TABLE review_phrase_group_mapping
 (
-    review_result_template_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    review_phrase_group_mapping_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    source_type                    VARCHAR(50) NOT NULL,
+    source_id                      BIGINT      NOT NULL,
+    group_code                     VARCHAR(50) NOT NULL,
+    created_at                     DATETIME    NOT NULL,
+    updated_at                     DATETIME    NOT NULL,
 
-    emotion_id                BIGINT NOT NULL,
-    situation_tag_id          BIGINT NOT NULL,
-    satisfaction_option_id    BIGINT NOT NULL,
-    next_action_option_id     BIGINT NOT NULL,
+    CONSTRAINT uq_review_phrase_group_mapping
+        UNIQUE (source_type, source_id)
+);
 
-    title_prefix_text         VARCHAR(150) NOT NULL,
-    title_highlight_text      VARCHAR(50)  NOT NULL,
-    title_suffix_text         VARCHAR(150) NOT NULL,
+-- =========================================================
+-- REVIEW TITLE PHRASE
+-- 결과 제목: 상황 그룹 + 만족도 그룹
+-- =========================================================
+CREATE TABLE review_title_phrase
+(
+    review_title_phrase_id   BIGINT AUTO_INCREMENT PRIMARY KEY,
+    situation_group_code     VARCHAR(50)  NOT NULL,
+    satisfaction_group_code  VARCHAR(50)  NOT NULL,
 
-    feedback_title            VARCHAR(150) NOT NULL,
-    feedback_text             TEXT         NOT NULL,
+    title_prefix_text        VARCHAR(150) NOT NULL,
+    title_highlight_text     VARCHAR(50)  NOT NULL,
+    title_suffix_text        VARCHAR(150) NOT NULL,
 
-    guide_title               VARCHAR(150) NOT NULL,
-    guide_item_1              VARCHAR(255) NOT NULL,
-    guide_item_2              VARCHAR(255) NOT NULL,
-    guide_item_3              VARCHAR(255) NOT NULL,
+    created_at               DATETIME     NOT NULL,
+    updated_at               DATETIME     NOT NULL,
 
-    priority                  INT          NOT NULL DEFAULT 1,
-    is_active                 BOOLEAN      NOT NULL DEFAULT TRUE,
-    created_at                DATETIME     NOT NULL,
-    updated_at                DATETIME     NOT NULL,
+    CONSTRAINT uq_review_title_phrase
+        UNIQUE (situation_group_code, satisfaction_group_code)
+);
 
-    CONSTRAINT uq_review_result_template
-        UNIQUE (emotion_id, situation_tag_id, satisfaction_option_id, next_action_option_id),
+-- =========================================================
+-- REVIEW FEEDBACK TITLE PHRASE
+-- 피드백 제목: 상황 그룹
+-- =========================================================
+CREATE TABLE review_feedback_title_phrase
+(
+    review_feedback_title_phrase_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    situation_group_code            VARCHAR(50)  NOT NULL,
+    feedback_title                  VARCHAR(255) NOT NULL,
+    created_at                      DATETIME     NOT NULL,
+    updated_at                      DATETIME     NOT NULL,
 
-    CONSTRAINT fk_review_template_emotion
-        FOREIGN KEY (emotion_id)
-            REFERENCES emotion (emotion_id),
+    CONSTRAINT uq_review_feedback_title_phrase
+        UNIQUE (situation_group_code)
+);
 
-    CONSTRAINT fk_review_template_situation
-        FOREIGN KEY (situation_tag_id)
-            REFERENCES situation_tag (situation_tag_id),
+-- =========================================================
+-- REVIEW FEEDBACK PHRASE
+-- 피드백 내용: 상황 그룹 + 만족도 그룹
+-- =========================================================
+CREATE TABLE review_feedback_phrase
+(
+    review_feedback_phrase_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    situation_group_code      VARCHAR(50) NOT NULL,
+    satisfaction_group_code   VARCHAR(50) NOT NULL,
+    feedback_text             TEXT        NOT NULL,
+    created_at                DATETIME    NOT NULL,
+    updated_at                DATETIME    NOT NULL,
 
-    CONSTRAINT fk_review_template_satisfaction
-        FOREIGN KEY (satisfaction_option_id)
-            REFERENCES review_choice_option (review_choice_option_id),
+    CONSTRAINT uq_review_feedback_phrase
+        UNIQUE (situation_group_code, satisfaction_group_code)
+);
 
-    CONSTRAINT fk_review_template_next_action
-        FOREIGN KEY (next_action_option_id)
-            REFERENCES review_choice_option (review_choice_option_id)
+-- =========================================================
+-- REVIEW EMOTION ADJUSTMENT PHRASE
+-- 감정 보정 문장: 감정 그룹
+-- =========================================================
+CREATE TABLE review_emotion_adjustment_phrase
+(
+    review_emotion_adjustment_phrase_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    emotion_group_code                  VARCHAR(50) NOT NULL,
+    adjustment_text                     TEXT        NOT NULL,
+    created_at                          DATETIME    NOT NULL,
+    updated_at                          DATETIME    NOT NULL,
+
+    CONSTRAINT uq_review_emotion_adjustment_phrase
+        UNIQUE (emotion_group_code)
+);
+
+-- =========================================================
+-- REVIEW GUIDE PHRASE
+-- 가이드: 내일 다짐 그룹
+-- =========================================================
+CREATE TABLE review_guide_phrase
+(
+    review_guide_phrase_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    next_action_group_code VARCHAR(50)  NOT NULL,
+    guide_title            VARCHAR(255) NOT NULL,
+    guide_item_1           VARCHAR(255) NOT NULL,
+    guide_item_2           VARCHAR(255) NOT NULL,
+    guide_item_3           VARCHAR(255) NOT NULL,
+    created_at             DATETIME     NOT NULL,
+    updated_at             DATETIME     NOT NULL,
+
+    CONSTRAINT uq_review_guide_phrase
+        UNIQUE (next_action_group_code)
 );
 
 -- =========================================================
