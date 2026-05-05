@@ -37,6 +37,30 @@ VALUES (1, '식비', NOW(), NOW()),
        (4, '문화생활', NOW(), NOW());
 
 -- =========================================================
+-- INCOME CATEGORY
+-- =========================================================
+INSERT INTO income_category (name, created_at, updated_at)
+VALUES ('급여', NOW(), NOW()),
+       ('용돈', NOW(), NOW()),
+       ('부수입', NOW(), NOW()),
+       ('상여금', NOW(), NOW()),
+       ('금융수입', NOW(), NOW()),
+       ('기타', NOW(), NOW());
+
+-- =========================================================
+-- ASSET CATEGORY
+-- income_category와 독립적으로 관리
+-- =========================================================
+INSERT INTO asset_category (name, created_at, updated_at)
+VALUES ('급여', NOW(), NOW()),
+       ('용돈', NOW(), NOW()),
+       ('부수입', NOW(), NOW()),
+       ('상여금', NOW(), NOW()),
+       ('금융수입', NOW(), NOW()),
+       ('기타', NOW(), NOW());
+
+
+-- =========================================================
 -- PAYMENT METHOD
 -- =========================================================
 INSERT INTO payment_method (name, created_at, updated_at)
