@@ -20,7 +20,9 @@ import com.feellog.backend.domain.master.dto.CategoryGroupDto;
 import com.feellog.backend.domain.master.dto.EmotionDto;
 import com.feellog.backend.domain.master.dto.EmotionGroupDto;
 import com.feellog.backend.domain.master.dto.MasterDataResponseDto;
+import com.feellog.backend.domain.master.dto.PaymentMethodDto;
 import com.feellog.backend.domain.master.dto.SituationTagDto;
+import com.feellog.backend.domain.paymentmethod.entity.PaymentMethod;
 import com.feellog.backend.domain.paymentmethod.repository.PaymentMethodRepository;
 import com.feellog.backend.domain.situationtag.entity.SituationTag;
 import com.feellog.backend.domain.situationtag.repository.SituationTagRepository;
@@ -36,17 +38,20 @@ public class MasterDataService {
 	private final CategoryGroupRepository categoryGroupRepository;
 	private final EmotionGroupRepository emotionGroupRepository;
 	private final SituationTagRepository situationTagRepository;
+	private final PaymentMethodRepository paymentMethodRepository;
 	
 	@Transactional
 	public MasterDataResponseDto getMasterData() {
 		List<CategoryGroup> categoryGroups = categoryGroupRepository.findAllWithCategories();
 		List<EmotionGroup> emotionGroups = emotionGroupRepository.findAllWithEmotions();
 		List<SituationTag> situationTags = situationTagRepository.findAll();
+		List<PaymentMethod> paymentMethods = paymentMethodRepository.findAll();
 
 		return MasterDataResponseDto.builder()
 				.categoryGroups(toCategoryGroupDto(categoryGroups))
 				.emotionGroups(toEmotionGroupDto(emotionGroups))
 				.situationTags(toSituationTagDto(situationTags))
+				.paymentMethods(toPaymentMethodDto(paymentMethods))
 				.build();
 	}
 	
@@ -89,6 +94,15 @@ public class MasterDataService {
 	            .map(tag -> SituationTagDto.builder()
 	                    .id(tag.getId())
 	                    .name(tag.getName())
+	                    .build()
+	            ).toList();
+	}
+	
+	private List<PaymentMethodDto> toPaymentMethodDto(List<PaymentMethod> methods) {
+	    return methods.stream()
+	            .map(method -> PaymentMethodDto.builder()
+	                    .id(method.getId())
+	                    .name(method.getName())
 	                    .build()
 	            ).toList();
 	}

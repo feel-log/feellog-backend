@@ -3,6 +3,8 @@ package com.feellog.backend.global.config;
 import com.feellog.backend.global.jwt.JwtProvider;
 import com.feellog.backend.global.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -19,6 +21,8 @@ import org.springframework.web.cors.CorsConfigurationSource;
 public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
+    
+    @Qualifier("corsConfigurationSource")
     private final CorsConfigurationSource corsConfigurationSource;
 
     @Bean

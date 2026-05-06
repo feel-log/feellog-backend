@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface IncomeRepository extends JpaRepository<Income, Long> {
 
@@ -17,5 +18,18 @@ public interface IncomeRepository extends JpaRepository<Income, Long> {
 
     // 기간별 조회 (통계용)
     List<Income> findByUserAndIncomeDateBetween(User user, LocalDate start, LocalDate end);
+    
+    Optional<Income> findByIdAndIsDeletedFalse(Long id);
+    
+    List<Income> findByIncomeDateBetweenAndUserAndIsDeletedFalse(
+    		LocalDate startDate, 
+    		LocalDate end, 
+    		User user
+    );
+    
+    List<Income> findByIncomeDateAndUserAndIsDeletedFalse(
+    		LocalDate date, 
+    		User user
+    );
 
 }
