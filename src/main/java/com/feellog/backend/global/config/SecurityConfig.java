@@ -17,16 +17,14 @@ import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
-//@RequiredArgsConstructor
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
+    
+    @Qualifier("corsConfigurationSource")
     private final CorsConfigurationSource corsConfigurationSource;
 
-    public SecurityConfig(JwtProvider jwtProvider, @Qualifier("corsConfigurationSource") CorsConfigurationSource corsConfigurationSource) {
-        this.jwtProvider = jwtProvider;
-        this.corsConfigurationSource = corsConfigurationSource;
-    }
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
