@@ -95,7 +95,7 @@ public class IncomeService {
     	Income income = incomeRepository.findById(incomeId)
     			.orElseThrow(() -> new RuntimeException("수입 없음"));
     	
-    	if (!income.getUser().getId().equals(incomeId)) {
+    	if (!income.getUser().getId().equals(userId)) {
     		throw new RuntimeException("수정 권한이 없습니다.");
     	}
     	
@@ -127,7 +127,7 @@ public class IncomeService {
     	return IncomeResponseDto.builder()
     			.userId(e.getUser().getId())
     			.amount(e.getAmount())
-    			.incomeCategoryId(e.getId())
+    			.incomeCategoryId(e.getIncomeCategory().getId())
     			.incomeDate(e.getIncomeDate())
     			.memo(e.getMemo())
     			.build();
