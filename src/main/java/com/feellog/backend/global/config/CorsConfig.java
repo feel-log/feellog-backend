@@ -22,7 +22,8 @@ public class CorsConfig {
                 "http://localhost:5173",
                 "https://feellog.xyz",
                 "https://www.feellog.xyz",
-                "https://feellog.vercel.app"
+                "https://feellog.vercel.app",
+                "https://api.feellog.xyz"
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
