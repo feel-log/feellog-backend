@@ -399,7 +399,7 @@ public class ReportService {
         return CommentDto.builder()
                 .type("NORMAL")
                 .targetName(maxChanged.categoryName())
-                .message("이번 달 가장 크게 변한 지출은 " + maxChanged.categoryName() + "예요")
+                .message("이번 달 가장 크게 변한 지출 " + maxChanged.categoryName())
                 .build();
     }
 
@@ -441,7 +441,7 @@ public class ReportService {
         return CommentDto.builder()
                 .type("NORMAL")
                 .targetName(emotionName)
-                .message(emotionName + "이 이번 달 소비에 자주 연결됐어요")
+                .message("이번 달 소비에 자주 연결된 감정 " + emotionName)
                 .build();
     }
 
@@ -471,7 +471,7 @@ public class ReportService {
         return CommentDto.builder()
                 .type("NORMAL")
                 .targetName(situationName)
-                .message(situationName + " 관련 소비가 가장 많았어요")
+                .message("소비가 가장 많았던 상황 " + situationName)
                 .build();
     }
 
