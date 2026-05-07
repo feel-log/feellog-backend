@@ -15,10 +15,13 @@ import com.feellog.backend.domain.emotion.repository.EmotionRepository;
 import com.feellog.backend.domain.expense.repository.ExpenseEmotionRepository;
 import com.feellog.backend.domain.expense.repository.ExpenseRepository;
 import com.feellog.backend.domain.expense.repository.ExpenseSituationTagRepository;
+import com.feellog.backend.domain.income.entity.IncomeCategory;
+import com.feellog.backend.domain.income.repository.IncomeCategoryRepository;
 import com.feellog.backend.domain.master.dto.CategoryDto;
 import com.feellog.backend.domain.master.dto.CategoryGroupDto;
 import com.feellog.backend.domain.master.dto.EmotionDto;
 import com.feellog.backend.domain.master.dto.EmotionGroupDto;
+import com.feellog.backend.domain.master.dto.IncomeCategoryDto;
 import com.feellog.backend.domain.master.dto.MasterDataResponseDto;
 import com.feellog.backend.domain.master.dto.PaymentMethodDto;
 import com.feellog.backend.domain.master.dto.SituationTagDto;
@@ -39,6 +42,7 @@ public class MasterDataService {
 	private final EmotionGroupRepository emotionGroupRepository;
 	private final SituationTagRepository situationTagRepository;
 	private final PaymentMethodRepository paymentMethodRepository;
+	private final IncomeCategoryRepository incomeCategoryRepository;
 	
 	@Transactional
 	public MasterDataResponseDto getMasterData() {
@@ -46,12 +50,14 @@ public class MasterDataService {
 		List<EmotionGroup> emotionGroups = emotionGroupRepository.findAllWithEmotions();
 		List<SituationTag> situationTags = situationTagRepository.findAll();
 		List<PaymentMethod> paymentMethods = paymentMethodRepository.findAll();
+		List<IncomeCategory> incomeCategories = incomeCategoryRepository.findAll();
 
 		return MasterDataResponseDto.builder()
 				.categoryGroups(toCategoryGroupDto(categoryGroups))
 				.emotionGroups(toEmotionGroupDto(emotionGroups))
 				.situationTags(toSituationTagDto(situationTags))
 				.paymentMethods(toPaymentMethodDto(paymentMethods))
+				.incomeCategories(toIncomeCategoryDto(incomeCategories))
 				.build();
 	}
 	
@@ -103,6 +109,15 @@ public class MasterDataService {
 	            .map(method -> PaymentMethodDto.builder()
 	                    .id(method.getId())
 	                    .name(method.getName())
+	                    .build()
+	            ).toList();
+	}
+	
+	private List<IncomeCategoryDto> toIncomeCategoryDto(List<IncomeCategory> categories) {
+	    return categories.stream()
+	            .map(category -> IncomeCategoryDto.builder()
+	                    .id(category.getId())
+	                    .name(category.getName())
 	                    .build()
 	            ).toList();
 	}
