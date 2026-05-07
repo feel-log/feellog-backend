@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -71,8 +72,8 @@ public class Review {
         review.situationTag = situationTag;
         review.satisfactionOption = satisfactionOption;
         review.nextActionOption = nextActionOption;
-        review.createdAt = LocalDateTime.now();
-        review.updatedAt = LocalDateTime.now();
+        review.createdAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+        review.updatedAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
         return review;
     }
 
@@ -86,6 +87,6 @@ public class Review {
         this.situationTag = situationTag;
         this.satisfactionOption = satisfactionOption;
         this.nextActionOption = nextActionOption;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
     }
 }
