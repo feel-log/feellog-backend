@@ -18,4 +18,5 @@ public class MasterDataResponseDto {
 	private List<EmotionGroupDto> emotionGroups;
 	private List<SituationTagDto> situationTags;
 	private List<PaymentMethodDto> paymentMethods;
+	private List<IncomeCategoryDto> incomeCategories;
 }
