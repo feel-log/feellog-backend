@@ -41,6 +41,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.time.format.TextStyle;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -66,7 +67,7 @@ public class ReportService {
 
     public WeeklyReportResponse getWeeklyReport(Long userId) {
         // 기간 계산 (일요일 ~ 토요일)
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
         LocalDate weekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
         LocalDate weekEnd = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SATURDAY));
 
@@ -783,7 +784,7 @@ public class ReportService {
     }
 
     public DailyReportResponse getDailyReport(Long userId) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
 
         BigDecimal totalAmount = reportRepository.findTotalExpenseByDate(userId, today);
         List<CategoryExpenseSummary> categories = reportRepository.findCategoryExpenseSummaryByDate(userId, today);
