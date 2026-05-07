@@ -819,7 +819,7 @@ public class ReportService {
                 .filter(c -> c.getTotal().compareTo(maxAmount) == 0)
                 .toList();
 
-        boolean allEqual = topCategories.size() == categories.size();
+        boolean allEqual = topCategories.size() == categories.size() && categories.size() > 2;
         String displayType = resolveDisplayType(topCategories.size(), allEqual);
         String mainMessage = resolveMainMessage(displayType, topCategories);
 
@@ -879,7 +879,7 @@ public class ReportService {
         return switch (displayType) {
             case "SINGLE" -> "오늘은 %s에 가장 많이 지출했어요"
                     .formatted(topCategories.get(0).getName());
-            case "DUAL" -> "오늘은 %s와 %s에 가장 많이 지출했어요"
+            case "DUAL" -> "오늘은 %s, %s에 가장 많이 지출했어요"
                     .formatted(topCategories.get(0).getName(), topCategories.get(1).getName());
             case "MULTIPLE" -> "%s, %s 외 %d개 항목에 동일하게 지출했어요"
                     .formatted(
@@ -893,7 +893,7 @@ public class ReportService {
     }
 
     private String resolveSubMessage(String displayType, List<CategoryExpenseSummary> topCategories, int topRatio) {
-        if (displayType.equals("ALL_EQUAL") || topRatio == 100) {
+        if (displayType.equals("ALL_EQUAL") || (displayType.equals("MULTIPLE") && topRatio == 100)) {
             return "소비가 여러 항목에 고르게 나뉘어 있어요";
         }
         return switch (displayType) {
