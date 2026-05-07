@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -57,8 +58,8 @@ public class Asset {
         asset.assetDate = assetDate;
         asset.memo = memo;
         asset.isDeleted = false;
-        asset.createdAt = LocalDateTime.now();
-        asset.updatedAt = LocalDateTime.now();
+        asset.createdAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+        asset.updatedAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
         return asset;
     }
 
@@ -67,13 +68,13 @@ public class Asset {
         this.amount = amount;
         this.assetDate = assetDate;
         this.memo = memo;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
     }
 
     public void delete() {
         this.isDeleted = true;
-        this.deletedAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        this.deletedAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+        this.updatedAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
     }
 
 }
