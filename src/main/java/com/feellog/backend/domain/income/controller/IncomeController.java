@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.feellog.backend.domain.expense.dto.ExpenseResponseDto;
 import com.feellog.backend.domain.income.dto.IncomeRequestDto;
 import com.feellog.backend.domain.income.dto.IncomeResponseDto;
 import com.feellog.backend.domain.income.service.IncomeService;
@@ -59,6 +60,12 @@ public class IncomeController {
 			@RequestParam("year") int year, @RequestParam("month") int month,
 			 @AuthenticationPrincipal Long userId) {
 		return incomeService.getMonthlyIncomes(year, month, userId);
+	}
+	
+	@GetMapping("/category/{categoryId}")
+	public List<IncomeResponseDto> getByCategory(@PathVariable("categoryId") Long categoryId,
+												  @AuthenticationPrincipal Long userId) {
+		return incomeService.getByCategory(categoryId, userId);
 	}
 	
 	// income 수정

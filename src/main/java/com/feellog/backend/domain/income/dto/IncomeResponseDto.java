@@ -7,11 +7,11 @@ import lombok.Builder;
 
 @Builder
 public class IncomeResponseDto {
-	public Long getUserId() {
-		return userId;
+	public Long getIncomeId() {
+		return incomeId;
 	}
-	public void setUserId(Long userId) {
-		this.userId = userId;
+	public void setIncomeId(Long incomeId) {
+		this.incomeId = incomeId;
 	}
 	public BigDecimal getAmount() {
 		return amount;
@@ -37,7 +37,7 @@ public class IncomeResponseDto {
 	public void setMemo(String memo) {
 		this.memo = memo;
 	}
-	private Long userId;
+	private Long incomeId;
 	private BigDecimal amount;
 	private Long incomeCategoryId;
 	private LocalDate incomeDate;
