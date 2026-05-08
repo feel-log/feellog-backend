@@ -163,11 +163,23 @@ public class AssetService {
     private Sort createSort(AssetSortType sortType) {
 
         if (sortType == null) {
-            return Sort.by(Sort.Direction.DESC, "createdAt");
+            return Sort.by(
+                    Sort.Order.desc("assetDate"),
+                    Sort.Order.desc("createdAt")
+            );
         }
 
         return switch (sortType) {
-            case LATEST -> Sort.by(Sort.Direction.DESC, "createdAt");
+            case LATEST -> Sort.by(
+                    Sort.Order.desc("assetDate"),
+                    Sort.Order.desc("createdAt")
+            );
+
+            case OLDEST -> Sort.by(
+                    Sort.Order.asc("assetDate"),
+                    Sort.Order.asc("createdAt")
+            );
+
             case AMOUNT_ASC -> Sort.by(Sort.Direction.ASC, "amount");
             case AMOUNT_DESC -> Sort.by(Sort.Direction.DESC, "amount");
         };
