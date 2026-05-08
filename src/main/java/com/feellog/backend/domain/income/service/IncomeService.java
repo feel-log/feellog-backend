@@ -6,6 +6,9 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.feellog.backend.domain.category.entity.Category;
+import com.feellog.backend.domain.expense.dto.ExpenseResponseDto;
+import com.feellog.backend.domain.expense.entity.Expense;
 import com.feellog.backend.domain.income.dto.IncomeRequestDto;
 import com.feellog.backend.domain.income.dto.IncomeResponseDto;
 import com.feellog.backend.domain.income.entity.Income;
@@ -35,7 +38,6 @@ public class IncomeService {
 		User user = userRepository.findByIdAndStatus(userId, UserStatus.ACTIVE)
                 .orElseThrow(() -> new RuntimeException("활성 유저 없음"));
 
-		// Income 저장
 		Income income = new Income();
 		income.setUser(user);
 		income.setIncomeCategory(incomeCategory);
@@ -91,6 +93,18 @@ public class IncomeService {
     }
     
     @Transactional
+    public List<IncomeResponseDto> getByCategory(Long categoryId, Long userId) {
+        // Repository 메서드에 user, category 파라미터 추가 필요
+    	User user = userRepository.findByIdAndStatus(userId, UserStatus.ACTIVE)
+                .orElseThrow(() -> new RuntimeException("활성 유저 없음"));
+    	IncomeCategory category = incomeCategoryRepository.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("카테고리 없음"));
+    	
+        List<Income> list = incomeRepository.findByUserAndIncomeCategoryAndIsDeletedFalse(user, category);
+        return list.stream().map(this::toDto).toList();
+    }
+    
+    @Transactional
     public void updateIncome(Long incomeId, IncomeRequestDto dto, Long userId) {
     	Income income = incomeRepository.findById(incomeId)
     			.orElseThrow(() -> new RuntimeException("수입 없음"));
@@ -123,13 +137,13 @@ public class IncomeService {
     	income.setDeletedAt(LocalDateTime.now());
     }
     
-    private IncomeResponseDto toDto(Income e) {
+    private IncomeResponseDto toDto(Income i) {
     	return IncomeResponseDto.builder()
-    			.userId(e.getUser().getId())
-    			.amount(e.getAmount())
-    			.incomeCategoryId(e.getIncomeCategory().getId())
-    			.incomeDate(e.getIncomeDate())
-    			.memo(e.getMemo())
+    			.incomeId(i.getId())
+    			.amount(i.getAmount())
+    			.incomeCategoryId(i.getIncomeCategory().getId())
+    			.incomeDate(i.getIncomeDate())
+    			.memo(i.getMemo())
     			.build();
     }
        

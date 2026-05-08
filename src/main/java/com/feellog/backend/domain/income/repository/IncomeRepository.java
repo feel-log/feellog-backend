@@ -1,6 +1,9 @@
 package com.feellog.backend.domain.income.repository;
 
+import com.feellog.backend.domain.category.entity.Category;
+import com.feellog.backend.domain.expense.entity.Expense;
 import com.feellog.backend.domain.income.entity.Income;
+import com.feellog.backend.domain.income.entity.IncomeCategory;
 import com.feellog.backend.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -31,5 +34,6 @@ public interface IncomeRepository extends JpaRepository<Income, Long> {
     		LocalDate date, 
     		User user
     );
+    List<Income> findByUserAndIncomeCategoryAndIsDeletedFalse(User user, IncomeCategory category);
 
 }
