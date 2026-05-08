@@ -261,10 +261,10 @@ VALUES
 INSERT INTO review_emotion_adjustment_phrase
 (emotion_group_code, adjustment_text, created_at, updated_at)
 VALUES
-    ('positive','소비 후 긍정적인 감정도 함께 기억해보세요.',NOW(),NOW()),
-    ('anxious','소비 후 후회가 남았다면 다음 소비 전에 잠깐 멈춰보세요.',NOW(),NOW()),
-    ('low_energy','에너지가 낮을 때는 소비 판단이 흔들릴 수 있어요.',NOW(),NOW()),
-    ('tension','감정이 강할 때 소비가 빠르게 일어날 수 있어요.',NOW(),NOW());
+    ('positive','소비 후 긍정적인 감정도 함께 기억해보세요\n',NOW(),NOW()),
+    ('anxious','소비 후 후회가 남았다면 다음 소비 전에 잠깐 멈춰보세요\n',NOW(),NOW()),
+    ('low_energy','에너지가 낮을 때는 소비 판단이 흔들릴 수 있어요\n',NOW(),NOW()),
+    ('tension','감정이 강할 때 소비가 빠르게 일어날 수 있어요\n',NOW(),NOW());
 
 -- =========================================================
 -- REVIEW GUIDE PHRASE
