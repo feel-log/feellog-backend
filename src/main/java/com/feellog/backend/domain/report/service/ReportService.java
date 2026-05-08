@@ -9,7 +9,6 @@ import com.feellog.backend.domain.expense.entity.ExpenseEmotion;
 import com.feellog.backend.domain.expense.entity.ExpenseSituationTag;
 import com.feellog.backend.domain.income.entity.Income;
 import com.feellog.backend.domain.report.dto.CategoryAmountDto;
-
 import com.feellog.backend.domain.report.dto.projection.CategoryExpenseSummary;
 import com.feellog.backend.domain.report.dto.projection.EmotionSummary;
 import com.feellog.backend.domain.report.dto.response.CategoryDetailResponse;
@@ -52,6 +51,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -399,7 +399,7 @@ public class ReportService {
         return CommentDto.builder()
                 .type("NORMAL")
                 .targetName(maxChanged.categoryName())
-                .message("이번 달 가장 크게 변한 지출은 " + maxChanged.categoryName() + "예요")
+                .message("이번 달 가장 크게 변한 지출 " + maxChanged.categoryName())
                 .build();
     }
 
@@ -441,7 +441,7 @@ public class ReportService {
         return CommentDto.builder()
                 .type("NORMAL")
                 .targetName(emotionName)
-                .message(emotionName + "이 이번 달 소비에 자주 연결됐어요")
+                .message("이번 달 소비에 자주 연결된 감정 " + emotionName)
                 .build();
     }
 
@@ -471,7 +471,7 @@ public class ReportService {
         return CommentDto.builder()
                 .type("NORMAL")
                 .targetName(situationName)
-                .message(situationName + " 관련 소비가 가장 많았어요")
+                .message("소비가 가장 많았던 상황 " + situationName)
                 .build();
     }
 
@@ -658,7 +658,7 @@ public class ReportService {
                 .dailyLogs(dailyLogs) // 내역이 없으면 빈 리스트 [] 전달
                 .expenses(expenses)
                 .build();
-        }
+    }
 
     private CategoryDetailResponse.ExpenseDto mapToExpenseDto(Expense e) {
         return CategoryDetailResponse.ExpenseDto.builder()
@@ -833,27 +833,27 @@ public class ReportService {
                 .intValue();
 
         String subMessage = resolveSubMessage(displayType, topCategories, topRatio);
-        int extraCount = topCategories.size() >= 3 ? topCategories.size() - 2 : 0;
-        List<DailyReportResponse.ExpenseGraph.TopCategory> topCategoryList = topCategories.stream()
-                .limit(2)
-                .map(c -> DailyReportResponse.ExpenseGraph.TopCategory.builder()
-                        .label(c.getName())
-                        .amount(c.getTotal().longValue())
-                        .build())
-                .toList();
+        int topExtraCount = topCategories.size() >= 3 ? topCategories.size() - 2 : 0;
+        List<DailyReportResponse.ExpenseGraph.Category> topCategoryList = toCategoryList(topCategories);
 
         Set<Long> topIds = topCategories.stream()
                 .map(CategoryExpenseSummary::getCategoryId)
                 .collect(Collectors.toSet());
 
-        DailyReportResponse.ExpenseGraph.SecondCategory secondCategory = categories.stream()
+        Optional<BigDecimal> secondMax = categories.stream()
                 .filter(c -> !topIds.contains(c.getCategoryId()))
-                .findFirst()
-                .map(c -> DailyReportResponse.ExpenseGraph.SecondCategory.builder()
-                        .label(c.getName())
-                        .amount(c.getTotal().longValue())
-                        .build())
-                .orElse(null);
+                .map(CategoryExpenseSummary::getTotal)
+                .max(BigDecimal::compareTo);
+
+        List<CategoryExpenseSummary> secondCandidates = secondMax
+                .map(maxVal -> categories.stream()
+                        .filter(c -> !topIds.contains(c.getCategoryId()))
+                        .filter(c -> c.getTotal().compareTo(maxVal) == 0)
+                        .toList())
+                .orElse(List.of());
+
+        int secondExtraCount = secondCandidates.size() >= 3 ? secondCandidates.size() - 2 : 0;
+        List<DailyReportResponse.ExpenseGraph.Category> secondCategoryList = toCategoryList(secondCandidates);
 
         return DailyReportResponse.ExpenseGraph.builder()
                 .displayType(displayType)
@@ -861,9 +861,21 @@ public class ReportService {
                 .subMessage(subMessage)
                 .topRatio(topRatio)
                 .topCategories(topCategoryList)
-                .secondCategory(secondCategory)
-                .extraCount(extraCount)
+                .secondCategories(secondCategoryList)
+                .topExtraCount(topExtraCount)
+                .secondExtraCount(secondExtraCount)
                 .build();
+    }
+
+    private List<DailyReportResponse.ExpenseGraph.Category> toCategoryList(
+            List<CategoryExpenseSummary> candidates) {
+        return candidates.stream()
+                .limit(2)
+                .map(c -> DailyReportResponse.ExpenseGraph.Category.builder()
+                        .label(c.getName())
+                        .amount(c.getTotal().longValue())
+                        .build())
+                .toList();
     }
 
     private String resolveDisplayType(int topCount, boolean allEqual) {

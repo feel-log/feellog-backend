@@ -28,18 +28,13 @@ public record DailyReportResponse(
             String mainMessage,
             String subMessage,
             int topRatio,
-            List<TopCategory> topCategories,
-            SecondCategory secondCategory,
-            int extraCount
+            List<Category> topCategories,
+            List<Category> secondCategories,
+            int topExtraCount,
+            int secondExtraCount
     ) {
         @Builder
-        public record TopCategory(
-                String label,
-                long amount
-        ) {}
-
-        @Builder
-        public record SecondCategory(
+        public record Category(
                 String label,
                 long amount
         ) {}
