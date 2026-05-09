@@ -355,39 +355,36 @@ public class ReportService {
             List<CategoryStatDto> categoryList,
             List<CategoryAmountDto> prevCategoryAmounts
     ) {
-        if (prevCategoryAmounts.isEmpty() || categoryList.isEmpty()) {
-            return CommentDto.builder()
-                    .type("NO_PREV_DATA")
-                    .targetName(null)
-                    .message("다음 달부터 지출 변화 추이를 보여드릴게요")
-                    .build();
-        }
 
+        if (categoryList.isEmpty() || prevCategoryAmounts.isEmpty()) {
+            return createNoDataComment();
+        }
         Map<Long, Long> prevCategoryMap = prevCategoryAmounts.stream()
                 .collect(Collectors.toMap(
                         CategoryAmountDto::categoryId,
                         dto -> dto.amount().longValue()
                 ));
-
         CategoryStatDto maxChanged = null;
-        long maxDiff = -1;
+        long maxDiff = 0;
+        int tieCount = 0;
 
         for (CategoryStatDto cat : categoryList) {
-            long prev = prevCategoryMap.getOrDefault(cat.categoryId(), 0L);
+            Long prev = prevCategoryMap.get(cat.categoryId());
+            if (prev == null) continue;
             long diff = Math.abs(cat.totalAmount() - prev);
+            if (diff == 0) continue;
             if (diff > maxDiff) {
                 maxDiff = diff;
                 maxChanged = cat;
+                tieCount = 1;
+            } else if (diff == maxDiff) {
+                tieCount++;
             }
         }
 
-        long finalMaxDiff = maxDiff;
-        long tieCount = categoryList.stream()
-                .filter(cat -> {
-                    long prev = prevCategoryMap.getOrDefault(cat.categoryId(), 0L);
-                    return Math.abs(cat.totalAmount() - prev) == finalMaxDiff;
-                }).count();
-
+        if (maxChanged == null) {
+            return createNoDataComment();
+        }
         if (tieCount > 1) {
             return CommentDto.builder()
                     .type("TIE")
@@ -395,11 +392,18 @@ public class ReportService {
                     .message("이번 달엔 여러 지출 항목에서 비슷한 변화가 있었어요")
                     .build();
         }
-
         return CommentDto.builder()
                 .type("NORMAL")
                 .targetName(maxChanged.categoryName())
                 .message("이번 달 가장 크게 변한 지출 " + maxChanged.categoryName())
+                .build();
+    }
+    
+    private CommentDto createNoDataComment() {
+        return CommentDto.builder()
+                .type("NO_PREV_DATA")
+                .targetName(null)
+                .message("다음 달부터 지출 변화 추이를 보여드릴게요")
                 .build();
     }
 
