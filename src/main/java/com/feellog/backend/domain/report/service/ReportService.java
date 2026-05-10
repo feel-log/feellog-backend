@@ -427,7 +427,7 @@ public class ReportService {
                 .filter(e -> e.emotionCount() == maxCount)
                 .count();
 
-        if (tieCount > 1 || maxCount == 1) {
+        if (tieCount > 1 || (maxCount == 1 && emotionList.size() > 1)) {
             return CommentDto.builder()
                     .type("EQUAL_OR_SINGLE")
                     .targetName(null)
