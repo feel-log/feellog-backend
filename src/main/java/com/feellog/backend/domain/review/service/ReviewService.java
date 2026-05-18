@@ -115,7 +115,12 @@ public class ReviewService {
             throw new BusinessException(ErrorCode.INVALID_YEAR_MONTH);
         }
 
-        YearMonth yearMonth = YearMonth.of(year, month);
+        YearMonth yearMonth;
+        try {
+            yearMonth = YearMonth.of(year, month);
+        } catch (DateTimeException e) {
+            throw new BusinessException(ErrorCode.INVALID_YEAR_MONTH);
+        }
         LocalDate startDate = yearMonth.atDay(1);
         LocalDate endDate = yearMonth.atEndOfMonth();
 
