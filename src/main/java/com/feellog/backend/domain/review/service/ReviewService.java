@@ -7,6 +7,7 @@ import com.feellog.backend.domain.review.dto.request.ReviewUpsertRequest;
 import com.feellog.backend.domain.review.dto.response.MonthlyReviewDayResponse;
 import com.feellog.backend.domain.review.dto.response.MonthlyReviewResponse;
 import com.feellog.backend.domain.review.dto.response.ReviewResponse;
+import com.feellog.backend.domain.review.dto.response.ReviewSelectedResponse;
 import com.feellog.backend.domain.review.entity.Review;
 import com.feellog.backend.domain.review.entity.ReviewChoiceOption;
 import com.feellog.backend.domain.review.repository.ReviewChoiceOptionRepository;
@@ -136,6 +137,28 @@ public class ReviewService {
                 .toList();
 
         return new MonthlyReviewResponse(year, month, days);
+    }
+
+    // REV-06 특정 날짜 회고 삭제
+    @Transactional
+    public void deleteReview(Long userId, LocalDate reviewDate) {
+        Review review = reviewRepository.findByUserIdAndReviewDate(userId, reviewDate)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
+
+        reviewRepository.delete(review);
+    }
+
+    // REV-07 특정 날짜 회고 기존 선택값 조회
+    public ReviewSelectedResponse getReviewSelected(Long userId, LocalDate reviewDate) {
+        Review review = reviewRepository.findByUserIdAndReviewDate(userId, reviewDate)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
+
+        return new ReviewSelectedResponse(
+                review.getEmotion().getId(),
+                review.getSituationTag().getId(),
+                review.getSatisfactionOption().getId(),
+                review.getNextActionOption().getId()
+        );
     }
 
 }

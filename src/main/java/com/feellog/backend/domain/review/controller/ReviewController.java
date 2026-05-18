@@ -4,6 +4,7 @@ import com.feellog.backend.domain.review.dto.ReviewOptionsResponse;
 import com.feellog.backend.domain.review.dto.request.ReviewUpsertRequest;
 import com.feellog.backend.domain.review.dto.response.MonthlyReviewResponse;
 import com.feellog.backend.domain.review.dto.response.ReviewResponse;
+import com.feellog.backend.domain.review.dto.response.ReviewSelectedResponse;
 import com.feellog.backend.domain.review.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -48,5 +49,21 @@ public class ReviewController {
             @RequestParam int month
     ) {
         return reviewService.getMonthlyReviews(userId, year, month);
+    }
+
+    @DeleteMapping("/{reviewDate}")
+    public void deleteReview(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable LocalDate reviewDate
+    ) {
+        reviewService.deleteReview(userId, reviewDate);
+    }
+
+    @GetMapping("/{reviewDate}/selected")
+    public ReviewSelectedResponse getReviewSelected(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable LocalDate reviewDate
+    ) {
+        return reviewService.getReviewSelected(userId, reviewDate);
     }
 }
