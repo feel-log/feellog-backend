@@ -11,10 +11,12 @@ import com.feellog.backend.domain.income.entity.Income;
 import com.feellog.backend.domain.report.dto.CategoryAmountDto;
 import com.feellog.backend.domain.report.dto.projection.CategoryExpenseSummary;
 import com.feellog.backend.domain.report.dto.projection.EmotionSummary;
+import com.feellog.backend.domain.report.dto.projection.MonthlyTagRankProjection;
 import com.feellog.backend.domain.report.dto.response.CategoryDetailResponse;
 import com.feellog.backend.domain.report.dto.response.CategoryStatDto;
 import com.feellog.backend.domain.report.dto.response.CommentDto;
 import com.feellog.backend.domain.report.dto.response.CommentsDto;
+import com.feellog.backend.domain.report.dto.response.ConsecutiveTrendDto;
 import com.feellog.backend.domain.report.dto.response.DailyReportResponse;
 import com.feellog.backend.domain.report.dto.response.EmotionDetailResponse;
 import com.feellog.backend.domain.report.dto.response.EmotionStatDto;
@@ -60,6 +62,7 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class ReportService {
 
+    private static final int TREND_MONTHS = 3;
     private final ReportRepository reportRepository;
     private final IncomeReportRepository incomeReportRepository;
     private final CategoryRepository categoryRepository;
@@ -140,8 +143,30 @@ public class ReportService {
         // 상황별 집계
         List<SituationStatDto> situationList = buildSituationStats(currentExpenses);
 
+        // N개월치 트렌드 데이터 조회
+        YearMonth earliest = yearMonth.minusMonths(TREND_MONTHS - 1L);
+        LocalDate trendStart = earliest.atDay(1);
+
+        List<MonthlyTagRankProjection> categoryRankData =
+                reportRepository.findMonthlyCategoryRanks(userId, trendStart, endDate);
+        List<MonthlyTagRankProjection> emotionRankData =
+                reportRepository.findMonthlyEmotionRanks(userId, trendStart, endDate);
+        List<MonthlyTagRankProjection> situationRankData =
+                reportRepository.findMonthlySituationRanks(userId, trendStart, endDate);
+
+        ConsecutiveTrendDto categoryConsecutive = buildConsecutiveTrend(
+                categoryRankData, yearMonth,
+                "{N}개월 연속 가장 큰 지출 카테고리 {names}");
+        ConsecutiveTrendDto emotionConsecutive = buildConsecutiveTrend(
+                emotionRankData, yearMonth,
+                "{N}개월 연속 많이 나타난 지출 감정 {names}");
+        ConsecutiveTrendDto situationConsecutive = buildConsecutiveTrend(
+                situationRankData, yearMonth,
+                "{N}개월 연속 자주 선택한 소비 상황 {names}");
+
         // 문구 생성
-        CommentsDto comments = buildComments(categoryList, emotionList, situationList, prevCategoryAmounts);
+        CommentsDto comments = buildComments(categoryList, emotionList, situationList, prevCategoryAmounts,
+                categoryConsecutive, emotionConsecutive, situationConsecutive);
 
         return MonthlyReportResponse.builder()
                 .period(MonthlyReportResponse.PeriodDto.builder()
@@ -342,12 +367,18 @@ public class ReportService {
             List<CategoryStatDto> categoryList,
             List<EmotionStatDto> emotionList,
             List<SituationStatDto> situationList,
-            List<CategoryAmountDto> prevCategoryAmounts
+            List<CategoryAmountDto> prevCategoryAmounts,
+            ConsecutiveTrendDto categoryConsecutive,
+            ConsecutiveTrendDto emotionConsecutive,
+            ConsecutiveTrendDto situationConsecutive
     ) {
         return CommentsDto.builder()
                 .categoryChange(buildCategoryChangeComment(categoryList, prevCategoryAmounts))
                 .emotionTrend(buildEmotionTrendComment(emotionList))
                 .situationTrend(buildSituationTrendComment(situationList))
+                .categoryConsecutive(categoryConsecutive)
+                .emotionConsecutive(emotionConsecutive)
+                .situationConsecutive(situationConsecutive)
                 .build();
     }
 
@@ -477,6 +508,100 @@ public class ReportService {
                 .targetName(situationName)
                 .message("소비가 가장 많았던 상황 " + situationName)
                 .build();
+    }
+
+    // N개월치 Projection → 연속 1위 트렌드 문구 생성
+    private ConsecutiveTrendDto buildConsecutiveTrend(
+            List<MonthlyTagRankProjection> rawData,
+            YearMonth baseMonth,
+            String messageTemplate
+    ) {
+        // 월별 tagId → score 맵 (최신월 index 0)
+        List<Map<Long, Long>> monthlyScores = new ArrayList<>();
+        List<Map<Long, String>> monthlyNames = new ArrayList<>();
+
+        for (int i = 0; i < TREND_MONTHS; i++) {
+            YearMonth ym = baseMonth.minusMonths(i);
+            Map<Long, Long> scoreMap = new LinkedHashMap<>();
+            Map<Long, String> nameMap = new LinkedHashMap<>();
+
+            rawData.stream()
+                    .filter(d -> d.getYear() == ym.getYear() && d.getMonth() == ym.getMonthValue())
+                    .forEach(d -> {
+                        scoreMap.merge(d.getTagId(), d.getScore().longValue(), Long::sum);
+                        nameMap.putIfAbsent(d.getTagId(), d.getTagName());
+                    });
+
+            monthlyScores.add(scoreMap);
+            monthlyNames.add(nameMap);
+        }
+
+        // 당월 데이터 없으면 미노출
+        if (monthlyScores.getFirst().isEmpty()) {
+            return ConsecutiveTrendDto.builder().months(0).names(List.of()).message(null).build();
+        }
+
+        // 당월 1위 tagId 집합
+        Set<Long> consecutiveTopIds = getTopIds(monthlyScores.getFirst());
+        int consecutiveMonths = 1;
+
+        for (int i = 1; i < TREND_MONTHS; i++) {
+            if (monthlyScores.get(i).isEmpty()) break;
+
+            Set<Long> prevTopIds = getTopIds(monthlyScores.get(i));
+            consecutiveTopIds.retainAll(prevTopIds); // 교집합: 연속 공동 1위만 유지
+
+            if (consecutiveTopIds.isEmpty()) break;
+            consecutiveMonths++;
+        }
+
+        // 1개월만 1위 → 미노출
+        if (consecutiveMonths <= 1) {
+            return ConsecutiveTrendDto.builder().months(0).names(List.of()).message(null).build();
+        }
+
+        // 태그명 수집 (당월 nameMap 기준)
+        Map<Long, String> currentNameMap = monthlyNames.getFirst();
+        List<String> topNames = consecutiveTopIds.stream()
+                .map(currentNameMap::get)
+                .filter(name -> name != null && !name.isBlank())
+                .sorted()
+                .toList();
+
+        String message = resolveConsecutiveMessage(messageTemplate, consecutiveMonths, topNames);
+
+        return ConsecutiveTrendDto.builder()
+                .months(consecutiveMonths)
+                .names(topNames)
+                .message(message)
+                .build();
+    }
+
+    // scoreMap에서 최고점 동률 tagId Set 반환
+    private Set<Long> getTopIds(Map<Long, Long> scoreMap) {
+        long maxScore = scoreMap.values().stream()
+                .mapToLong(Long::longValue)
+                .max()
+                .orElse(0L);
+
+        return scoreMap.entrySet().stream()
+                .filter(e -> e.getValue() == maxScore)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+    }
+
+    // 연속 문구 포맷 처리 (공동 1위 3개 이상 시 "외 N개" 처리)
+    private String resolveConsecutiveMessage(String template, int months, List<String> names) {
+        String namesStr;
+        if (names.size() >= 3) {
+            namesStr = names.get(0) + ", " + names.get(1) + " 외 " + (names.size() - 2) + "개";
+        } else {
+            namesStr = String.join(", ", names);
+        }
+
+        return template
+                .replace("{N}", String.valueOf(months))
+                .replace("{names}", namesStr);
     }
 
     public MonthlyExpenseDetailResponse getMonthlyExpenseDetail(Long userId, int year, int month, int page, int size, String sort) {

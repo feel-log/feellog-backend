@@ -6,5 +6,8 @@ import lombok.Builder;
 public record CommentsDto(
         CommentDto categoryChange,
         CommentDto emotionTrend,
-        CommentDto situationTrend
+        CommentDto situationTrend,
+        ConsecutiveTrendDto categoryConsecutive,
+        ConsecutiveTrendDto emotionConsecutive,
+        ConsecutiveTrendDto situationConsecutive
 ) {}
