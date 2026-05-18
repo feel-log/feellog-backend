@@ -2,9 +2,11 @@ package com.feellog.backend.domain.review.controller;
 
 import com.feellog.backend.domain.review.dto.ReviewOptionsResponse;
 import com.feellog.backend.domain.review.dto.request.ReviewUpsertRequest;
+import com.feellog.backend.domain.review.dto.response.MonthlyReviewResponse;
 import com.feellog.backend.domain.review.dto.response.ReviewResponse;
 import com.feellog.backend.domain.review.service.ReviewService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,5 +39,14 @@ public class ReviewController {
             @PathVariable LocalDate reviewDate
     ) {
         return reviewService.getReview(userId, reviewDate);
+    }
+
+    @GetMapping("/monthly")
+    public MonthlyReviewResponse getMonthlyReviews(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam int year,
+            @RequestParam int month
+    ) {
+        return reviewService.getMonthlyReviews(userId, year, month);
     }
 }

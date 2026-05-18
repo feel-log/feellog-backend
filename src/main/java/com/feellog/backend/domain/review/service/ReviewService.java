@@ -4,6 +4,8 @@ import com.feellog.backend.domain.emotion.entity.Emotion;
 import com.feellog.backend.domain.emotion.repository.EmotionRepository;
 import com.feellog.backend.domain.review.dto.ReviewOptionsResponse;
 import com.feellog.backend.domain.review.dto.request.ReviewUpsertRequest;
+import com.feellog.backend.domain.review.dto.response.MonthlyReviewDayResponse;
+import com.feellog.backend.domain.review.dto.response.MonthlyReviewResponse;
 import com.feellog.backend.domain.review.dto.response.ReviewResponse;
 import com.feellog.backend.domain.review.entity.Review;
 import com.feellog.backend.domain.review.entity.ReviewChoiceOption;
@@ -21,7 +23,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -102,4 +107,35 @@ public class ReviewService {
 
         return reviewResultService.createResponse(review);
     }
+
+    // REV-04 월간 회고 작성 여부 조회하기
+    public MonthlyReviewResponse getMonthlyReviews(Long userId, int year, int month) {
+        if (month < 1 || month > 12) {
+            throw new BusinessException(ErrorCode.INVALID_YEAR_MONTH);
+        }
+
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+
+        List<LocalDate> writtenReviewDates =
+                reviewRepository.findReviewDatesByUserIdAndReviewDateBetween(
+                        userId,
+                        startDate,
+                        endDate
+                );
+
+        Set<LocalDate> writtenReviewDateSet = new HashSet<>(writtenReviewDates);
+
+        List<MonthlyReviewDayResponse> days = startDate
+                .datesUntil(endDate.plusDays(1))
+                .map(date -> new MonthlyReviewDayResponse(
+                        date,
+                        writtenReviewDateSet.contains(date)
+                ))
+                .toList();
+
+        return new MonthlyReviewResponse(year, month, days);
+    }
+
 }
