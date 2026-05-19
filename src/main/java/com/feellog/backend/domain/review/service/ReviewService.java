@@ -4,7 +4,10 @@ import com.feellog.backend.domain.emotion.entity.Emotion;
 import com.feellog.backend.domain.emotion.repository.EmotionRepository;
 import com.feellog.backend.domain.review.dto.ReviewOptionsResponse;
 import com.feellog.backend.domain.review.dto.request.ReviewUpsertRequest;
+import com.feellog.backend.domain.review.dto.response.MonthlyReviewDayResponse;
+import com.feellog.backend.domain.review.dto.response.MonthlyReviewResponse;
 import com.feellog.backend.domain.review.dto.response.ReviewResponse;
+import com.feellog.backend.domain.review.dto.response.ReviewSelectedResponse;
 import com.feellog.backend.domain.review.entity.Review;
 import com.feellog.backend.domain.review.entity.ReviewChoiceOption;
 import com.feellog.backend.domain.review.repository.ReviewChoiceOptionRepository;
@@ -20,8 +23,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -102,4 +109,62 @@ public class ReviewService {
 
         return reviewResultService.createResponse(review);
     }
+
+    // REV-04 월간 회고 작성 여부 조회하기
+    public MonthlyReviewResponse getMonthlyReviews(Long userId, int year, int month) {
+        if (month < 1 || month > 12) {
+            throw new BusinessException(ErrorCode.INVALID_YEAR_MONTH);
+        }
+
+        YearMonth yearMonth;
+        try {
+            yearMonth = YearMonth.of(year, month);
+        } catch (DateTimeException e) {
+            throw new BusinessException(ErrorCode.INVALID_YEAR_MONTH);
+        }
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+
+        List<LocalDate> writtenReviewDates =
+                reviewRepository.findReviewDatesByUserIdAndReviewDateBetween(
+                        userId,
+                        startDate,
+                        endDate
+                );
+
+        Set<LocalDate> writtenReviewDateSet = new HashSet<>(writtenReviewDates);
+
+        List<MonthlyReviewDayResponse> days = startDate
+                .datesUntil(endDate.plusDays(1))
+                .map(date -> new MonthlyReviewDayResponse(
+                        date,
+                        writtenReviewDateSet.contains(date)
+                ))
+                .toList();
+
+        return new MonthlyReviewResponse(year, month, days);
+    }
+
+    // REV-06 특정 날짜 회고 삭제
+    @Transactional
+    public void deleteReview(Long userId, LocalDate reviewDate) {
+        Review review = reviewRepository.findByUserIdAndReviewDate(userId, reviewDate)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
+
+        reviewRepository.delete(review);
+    }
+
+    // REV-07 특정 날짜 회고 기존 선택값 조회
+    public ReviewSelectedResponse getReviewSelected(Long userId, LocalDate reviewDate) {
+        Review review = reviewRepository.findByUserIdAndReviewDate(userId, reviewDate)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
+
+        return new ReviewSelectedResponse(
+                review.getEmotion().getId(),
+                review.getSituationTag().getId(),
+                review.getSatisfactionOption().getId(),
+                review.getNextActionOption().getId()
+        );
+    }
+
 }
