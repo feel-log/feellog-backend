@@ -541,3 +541,26 @@ CREATE TABLE review
         FOREIGN KEY (next_action_option_id)
             REFERENCES review_choice_option (review_choice_option_id)
 );
+
+-- =========================================================
+-- NOTIFICATIONS
+-- 사용자에게 도착한 인앱 알림 (FCM 발송과 별개로 알림함 저장)
+-- users 1 : N notifications
+-- =========================================================
+CREATE TABLE IF NOT EXISTS notifications
+(
+    notification_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id         BIGINT       NOT NULL,
+    type            VARCHAR(30)  NOT NULL,
+    body            VARCHAR(255) NOT NULL,
+    is_read         BOOLEAN      NOT NULL DEFAULT FALSE,
+    read_at         DATETIME,
+    is_deleted      BOOLEAN      NOT NULL DEFAULT FALSE,
+    created_at      DATETIME     NOT NULL,
+    updated_at      DATETIME     NOT NULL,
+    deleted_at      DATETIME,
+
+    CONSTRAINT fk_notification_user
+        FOREIGN KEY (user_id)
+            REFERENCES users (user_id)
+);

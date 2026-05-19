@@ -1,5 +1,7 @@
 package com.feellog.backend.domain.user.service;
 
+import com.feellog.backend.domain.notification.entity.NotificationSettings;
+import com.feellog.backend.domain.notification.repository.NotificationSettingsRepository;
 import com.feellog.backend.domain.user.dto.TokenResponse;
 import com.feellog.backend.domain.user.entity.Provider;
 import com.feellog.backend.domain.user.entity.User;
@@ -23,6 +25,7 @@ public class SocialAuthService {
     private final GoogleAuthClient googleAuthClient;
     private final UserRepository userRepository;
     private final AuthService authService;
+    private final NotificationSettingsRepository notificationSettingsRepository;
 
     public TokenResponse kakaoLogin(String accessToken) {
         KakaoUserInfo userInfo = kakaoAuthClient.getUserInfo(accessToken);
@@ -53,6 +56,7 @@ public class SocialAuthService {
                 .email(null)
                 .nickname(nickname)
                 .build());
+        ensureNotificationSettings(user);
 
         return authService.issueTokens(user.getId());
     }
@@ -60,14 +64,28 @@ public class SocialAuthService {
     private TokenResponse findOrCreateAndIssueTokens(Provider provider, String providerUserId,
                                                       String email, String nickname) {
         User user = userRepository.findByProviderAndProviderUserId(provider, providerUserId)
-                .orElseGet(() -> userRepository.save(User.builder()
-                        .provider(provider)
-                        .providerUserId(providerUserId)
-                        .email(email)
-                        .nickname(nickname != null ? nickname : "사용자")
-                        .build()));
+                .orElseGet(() -> {
+                    User newUser = userRepository.save(User.builder()
+                            .provider(provider)
+                            .providerUserId(providerUserId)
+                            .email(email)
+                            .nickname(nickname != null ? nickname : "사용자")
+                            .build());
+                    ensureNotificationSettings(newUser);
+                    return newUser;
+                });
 
         user.updateLastLoginAt();
         return authService.issueTokens(user.getId());
+    }
+
+    private void ensureNotificationSettings(User user) {
+        if (notificationSettingsRepository.findByUser(user).isPresent()) {
+            return;
+        }
+        notificationSettingsRepository.save(NotificationSettings.builder()
+                .user(user)
+                .pushEnabled(true)
+                .build());
     }
 }

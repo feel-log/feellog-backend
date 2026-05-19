@@ -20,7 +20,8 @@ public class SwaggerConfig {
                 .name("bearerAuth");
 
         return new OpenAPI()
-                .addServersItem(new Server().url("https://api.feellog.xyz"))
+                .addServersItem(new Server().url("http://localhost:8080").description("Local"))
+                .addServersItem(new Server().url("https://api.feellog.xyz").description("Production"))
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .components(new Components().addSecuritySchemes("bearerAuth", securityScheme));
     }
