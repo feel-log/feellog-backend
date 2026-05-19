@@ -6,6 +6,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import static com.feellog.backend.global.exception.ErrorCode.INVALID_INPUT;
 
@@ -40,5 +41,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .badRequest()
                 .body(new ErrorResponse(ErrorCode.INVALID_INPUT.name(), e.getParameterName() + " 파라미터가 필요합니다."));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatchException(MethodArgumentTypeMismatchException e) {
+        return ResponseEntity
+                .badRequest()
+                .body(new ErrorResponse(ErrorCode.INVALID_INPUT.name(), e.getName() + "에 올바르지 않은 값입니다."));
     }
 }

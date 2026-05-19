@@ -4,6 +4,7 @@ import com.feellog.backend.domain.expense.entity.Expense;
 import com.feellog.backend.domain.report.dto.CategoryAmountDto;
 import com.feellog.backend.domain.report.dto.projection.CategoryExpenseSummary;
 import com.feellog.backend.domain.report.dto.projection.EmotionSummary;
+import com.feellog.backend.domain.report.dto.projection.MonthlyTagRankProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -220,9 +221,62 @@ public interface ReportRepository extends JpaRepository<Expense, Long> {
             @Param("endDate") LocalDate endDate
     );
 
+    // 카테고리별 월별 지출 합계 (N개월치)
+    @Query("""
+        SELECT e.category.id    AS tagId,
+               e.category.name  AS tagName,
+               YEAR(e.expenseDate)  AS year,
+               MONTH(e.expenseDate) AS month,
+               SUM(e.amount)        AS score
+        FROM Expense e
+        WHERE e.user.id = :userId
+          AND e.expenseDate BETWEEN :startDate AND :endDate
+          AND e.isDeleted = false
+        GROUP BY e.category.id, e.category.name, YEAR(e.expenseDate), MONTH(e.expenseDate)
+    """)
+    List<MonthlyTagRankProjection> findMonthlyCategoryRanks(
+            @Param("userId") Long userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 
+    // 감정별 월별 지출 건수 (N개월치)
+    @Query("""
+        SELECT ee.emotion.id        AS tagId,
+               ee.emotion.name      AS tagName,
+               YEAR(e.expenseDate)  AS year,
+               MONTH(e.expenseDate) AS month,
+               COUNT(e.id)          AS score
+        FROM Expense e
+        JOIN e.expenseEmotions ee
+        WHERE e.user.id = :userId
+          AND e.expenseDate BETWEEN :startDate AND :endDate
+          AND e.isDeleted = false
+        GROUP BY ee.emotion.id, ee.emotion.name, YEAR(e.expenseDate), MONTH(e.expenseDate)
+    """)
+    List<MonthlyTagRankProjection> findMonthlyEmotionRanks(
+            @Param("userId") Long userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 
-
-
-
+    // 상황태그별 월별 지출 건수 (N개월치)
+    @Query("""
+        SELECT est.situationTag.id      AS tagId,
+               est.situationTag.name    AS tagName,
+               YEAR(e.expenseDate)      AS year,
+               MONTH(e.expenseDate)     AS month,
+               COUNT(e.id)              AS score
+        FROM Expense e
+        JOIN e.expenseSituationTags est
+        WHERE e.user.id = :userId
+          AND e.expenseDate BETWEEN :startDate AND :endDate
+          AND e.isDeleted = false
+        GROUP BY est.situationTag.id, est.situationTag.name, YEAR(e.expenseDate), MONTH(e.expenseDate)
+    """)
+    List<MonthlyTagRankProjection> findMonthlySituationRanks(
+            @Param("userId") Long userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 }
