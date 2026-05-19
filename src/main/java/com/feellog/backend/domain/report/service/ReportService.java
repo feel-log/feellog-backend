@@ -63,6 +63,7 @@ import java.util.stream.Collectors;
 public class ReportService {
 
     private static final int TREND_MONTHS = 3;
+    private static final int MAX_LOOKUP_YEARS = 3;
     private final ReportRepository reportRepository;
     private final IncomeReportRepository incomeReportRepository;
     private final CategoryRepository categoryRepository;
@@ -106,7 +107,7 @@ public class ReportService {
     }
 
     public MonthlyReportResponse getMonthlyReport(Long userId, int year, int month) {
-
+        validateYearMonth(year, month);
         // 기간 계산
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate startDate = yearMonth.atDay(1);
@@ -605,6 +606,7 @@ public class ReportService {
     }
 
     public MonthlyExpenseDetailResponse getMonthlyExpenseDetail(Long userId, int year, int month, int page, int size, String sort) {
+        validateYearMonth(year, month);
 
         Sort sortOption = switch (sort) {
             case "OLDEST" -> Sort.by(
@@ -704,6 +706,7 @@ public class ReportService {
     }
 
     public CategoryDetailResponse getCategoryDetail(Long userId, Long categoryId, int year, int month, int page, int size, String sort) {
+        validateYearMonth(year, month);
 
         // 카테고리 Id 검증
         Category category = categoryRepository.findById(categoryId)
@@ -813,6 +816,7 @@ public class ReportService {
     }
 
     public EmotionDetailResponse getEmotionDetail(Long userId, Long emotionId, int year, int month, int page, int size, String sort) {
+        validateYearMonth(year, month);
 
         Emotion emotion = emotionRepository.findById(emotionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EMOTION_NOT_FOUND));
@@ -1069,5 +1073,15 @@ public class ReportService {
                 .list(list)
                 .isEmpty(false)
                 .build();
+    }
+
+    private void validateYearMonth(int year, int month) {
+        YearMonth requested = YearMonth.of(year, month);
+        YearMonth current = YearMonth.now(ZoneId.of("Asia/Seoul"));
+        YearMonth earliest = current.minusYears(MAX_LOOKUP_YEARS);
+
+        if (requested.isAfter(current) || requested.isBefore(earliest)) {
+            throw new BusinessException(ErrorCode.INVALID_YEAR_MONTH);
+        }
     }
 }
