@@ -57,3 +57,26 @@ replay_pid*CLAUDE.md
 # Firebase
 # =========================
 firebase-service-account.json
+
+# =========================
+# VS Code (팀에 VS Code 쓰는 사람 있으면)
+# =========================
+.vscode/
+
+# =========================
+# Eclipse (혹시 모를 대비)
+# =========================
+.classpath
+.project
+.settings/
+
+# =========================
+# Spring Boot
+# =========================
+HELP.md
+
+# =========================
+# Test reports
+# =========================
+**/build/test-results/
+**/build/reports/
