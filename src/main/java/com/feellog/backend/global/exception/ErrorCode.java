@@ -25,6 +25,7 @@ public enum ErrorCode {
     EMOTION_NOT_FOUND(HttpStatus.BAD_REQUEST, "존재하지 않는 감정입니다."),
     SITUATION_TAG_NOT_FOUND(HttpStatus.BAD_REQUEST, "존재하지 않는 소비 상황입니다."),
     REVIEW_OPTION_NOT_FOUND(HttpStatus.BAD_REQUEST, "존재하지 않는 회고 선택지입니다."),
+    INVALID_YEAR_MONTH(HttpStatus.BAD_REQUEST, "유효하지 않은 연도 또는 월입니다."),
 
     // 자산
     ASSET_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 자산 기록입니다."),
