@@ -51,7 +51,8 @@ build/
 # Crash Logs
 # =========================
 hs_err_pid*
-replay_pid*CLAUDE.md
+replay_pid*
+CLAUDE.md
 
 # =========================
 # Firebase
