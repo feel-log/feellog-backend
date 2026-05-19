@@ -28,7 +28,7 @@
 | 자산 관리 | 자산 카테고리별 등록·조회·수정·삭제 |
 | 날짜별 회고 | 선택지 기반 일일 회고 작성 및 결과 메시지 생성 |
 | 리포트 | 일별·주별·월별 소비·감정 통계 리포트 |
-| 푸시 알림 | Firebase FCM 기반 지출 유도(19시) / 회고 유도(21시) 자동 발송 |
+| 알림 시스템 | FCM 푸시 발송 + 인앱 알림함(읽음/삭제), 사용자별 ON/OFF 토글, 19시·21시 자동 스케줄 |
 | 마스터 데이터 | 감정·카테고리·결제수단·상황 태그 전체 조회 |
 
 ---
@@ -48,6 +48,7 @@
 **알림**
 - Firebase Admin SDK (FCM 푸시)
 - Spring Scheduler (cron 기반 자동 발송)
+- 인앱 알림함(`notifications`) + 사용자 알림 설정(`notification_settings`)
 
 **문서 & 도구**
 - Springdoc OpenAPI (Swagger UI)
@@ -203,7 +204,21 @@ src/main/java/com/feellog/backend/
 
 | Method | URL | 설명 |
 |--------|-----|------|
+| GET | `/` | 내 알림함 목록 조회 |
+| PATCH | `/read-all` | 전체 읽음 처리 |
+| DELETE | `/{notificationId}` | 알림 단건 삭제 |
+| DELETE | `/` | 알림 전체 삭제 |
 | POST | `/test` | 테스트 푸시 발송 |
+
+</details>
+
+<details>
+<summary><b>Notification Settings — /api/v1/notification-settings</b></summary>
+
+| Method | URL | 설명 |
+|--------|-----|------|
+| GET | `/` | 내 알림 설정 조회 |
+| PATCH | `/` | 푸시 ON/OFF 수정 |
 
 </details>
 
@@ -284,7 +299,8 @@ docker compose up -d
 
 | 영역 | 테이블 |
 |------|--------|
-| 사용자 / 인증 | `users`, `refresh_tokens`, `notification_settings`, `device_tokens` |
+| 사용자 / 인증 | `users`, `refresh_tokens` |
+| 알림 | `notification_settings`, `device_tokens`, `notifications` |
 | 소비 | `category_group`, `category`, `payment_method`, `expense`, `expense_emotion`, `expense_situation_tag` |
 | 수입 | `income_category`, `income` |
 | 자산 | `asset_category`, `asset` |
@@ -295,11 +311,42 @@ docker compose up -d
 
 ---
 
-## 🔔 푸시 알림 스케줄
+## 🔔 알림 시스템
 
-Spring Scheduler로 매일 자동 발송됩니다.
+발송 흐름: **스케줄러 → 활성 유저 조회 → 알림 설정(push_enabled) 체크 → `notifications` 테이블 저장 → FCM 발송**
+사용자별 트랜잭션은 `REQUIRES_NEW`로 격리되어 한 유저의 실패가 전체 루프에 전파되지 않습니다.
+소셜 로그인 신규 가입 시 `notification_settings`가 `push_enabled=true`로 자동 생성됩니다.
 
-| 시각 | 내용 |
-|------|------|
-| 오후 7시 (19:00 KST) | 지출 기록 유도 알림 |
-| 오후 9시 (21:00 KST) | 일일 회고 유도 알림 |
+### 자동 발송 스케줄
+
+| 시각 (KST) | 내용 | 비고 |
+|------|------|------|
+| 19:00 | 지출 기록 유도 알림 | 당일 지출 기록 없고 푸시 ON인 활성 유저 |
+| 21:00 | 일일 회고 유도 알림 | 푸시 ON인 활성 유저 |
+
+### 알림함
+
+FCM 발송과 별개로 `notifications` 테이블에 저장되어 앱에서 목록 조회 / 읽음 처리 / 삭제(soft)가 가능합니다. 테스트 푸시(`POST /api/v1/notifications/test`)는 디바이스 토큰 검증용이므로 알림함에 저장되지 않습니다.
+
+---
+
+## 🚀 운영 환경
+
+- AWS EC2 (Ubuntu) + Docker Compose (MySQL 8.0)
+- 운영 도메인: `https://api.feellog.xyz`
+- Swagger UI: `https://api.feellog.xyz/swagger-ui/index.html`
+
+---
+
+## ⚠️ 공통 에러 응답 포맷
+
+`BusinessException` → `GlobalExceptionHandler` → `ErrorResponse` 형태로 일관된 JSON을 반환합니다.
+
+```json
+{
+  "code": "USER_NOT_FOUND",
+  "message": "존재하지 않는 사용자입니다."
+}
+```
+
+에러 코드는 `global/exception/ErrorCode.java`의 enum으로 관리됩니다.
