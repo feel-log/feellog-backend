@@ -521,26 +521,29 @@ public class ReportService {
         List<Map<Long, Long>> monthlyScores = new ArrayList<>();
         List<Map<Long, String>> monthlyNames = new ArrayList<>();
 
+        // 루프 돌기 전에 미리 연월별로 그룹화 (O(N))
+        Map<YearMonth, List<MonthlyTagRankProjection>> groupedByMonth = rawData.stream()
+                .collect(Collectors.groupingBy(d -> YearMonth.of(d.getYear(), d.getMonth())));
+
         for (int i = 0; i < TREND_MONTHS; i++) {
             YearMonth ym = baseMonth.minusMonths(i);
             Map<Long, Long> scoreMap = new LinkedHashMap<>();
             Map<Long, String> nameMap = new LinkedHashMap<>();
 
-            rawData.stream()
-                    .filter(d -> d.getYear() == ym.getYear() && d.getMonth() == ym.getMonthValue())
-                    .forEach(d -> {
-                        scoreMap.merge(d.getTagId(), d.getScore().longValue(), Long::sum);
-                        nameMap.putIfAbsent(d.getTagId(), d.getTagName());
-                    });
+            // 전체 리스트가 아니라 해당 월의 데이터만 꺼내서 처리
+            List<MonthlyTagRankProjection> monthData =
+                    groupedByMonth.getOrDefault(ym, Collections.emptyList());
+            for (MonthlyTagRankProjection d : monthData) {
+                scoreMap.merge(d.getTagId(), d.getScore().longValue(), Long::sum);
+                nameMap.putIfAbsent(d.getTagId(), d.getTagName());
+            }
 
             monthlyScores.add(scoreMap);
             monthlyNames.add(nameMap);
         }
 
         // 당월 데이터 없으면 미노출
-        if (monthlyScores.getFirst().isEmpty()) {
-            return ConsecutiveTrendDto.builder().months(0).names(List.of()).message(null).build();
-        }
+        if (monthlyScores.getFirst().isEmpty()) return emptyTrend();
 
         // 당월 1위 tagId 집합
         Set<Long> consecutiveTopIds = getTopIds(monthlyScores.getFirst());
@@ -557,9 +560,7 @@ public class ReportService {
         }
 
         // 1개월만 1위 → 미노출
-        if (consecutiveMonths <= 1) {
-            return ConsecutiveTrendDto.builder().months(0).names(List.of()).message(null).build();
-        }
+        if (consecutiveMonths <= 1) return emptyTrend();
 
         // 태그명 수집 (당월 nameMap 기준)
         Map<Long, String> currentNameMap = monthlyNames.getFirst();
@@ -576,6 +577,10 @@ public class ReportService {
                 .names(topNames)
                 .message(message)
                 .build();
+    }
+
+    private ConsecutiveTrendDto emptyTrend() {
+        return ConsecutiveTrendDto.builder().months(0).names(List.of()).message(null).build();
     }
 
     // scoreMap에서 최고점 동률 tagId Set 반환
