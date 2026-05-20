@@ -565,9 +565,9 @@ public class ReportService {
         // 태그명 수집 (당월 nameMap 기준)
         Map<Long, String> currentNameMap = monthlyNames.getFirst();
         List<String> topNames = consecutiveTopIds.stream()
+                .sorted()
                 .map(currentNameMap::get)
                 .filter(name -> name != null && !name.isBlank())
-                .sorted()
                 .toList();
 
         String message = resolveConsecutiveMessage(messageTemplate, consecutiveMonths, topNames);
