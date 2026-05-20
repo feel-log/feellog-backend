@@ -29,6 +29,15 @@ public class NotificationController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/{notificationId}/read")
+    public ResponseEntity<Void> markAsRead(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long notificationId
+    ) {
+        notificationService.markAsRead(userId, notificationId);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{notificationId}")
     public ResponseEntity<Void> deleteNotification(
             @AuthenticationPrincipal Long userId,

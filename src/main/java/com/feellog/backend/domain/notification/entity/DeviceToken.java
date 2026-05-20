@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -39,12 +40,12 @@ public class DeviceToken extends BaseTimeEntity {
         this.user = user;
         this.token = token;
         this.deviceType = deviceType;
-        this.lastUsedAt = LocalDateTime.now();
+        this.lastUsedAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
     }
 
     public void updateInfo(User user, String deviceType) {
         this.user = user;
         this.deviceType = deviceType;
-        this.lastUsedAt = LocalDateTime.now();
+        this.lastUsedAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
     }
 }

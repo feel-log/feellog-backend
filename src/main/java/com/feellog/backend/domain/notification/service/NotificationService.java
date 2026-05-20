@@ -37,6 +37,17 @@ public class NotificationService {
     }
 
     @Transactional
+    public void markAsRead(Long userId, Long notificationId) {
+        User user = findActiveUser(userId);
+        Notification notification = notificationRepository
+                .findByNotificationIdAndUserAndIsDeletedFalse(notificationId, user)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND));
+        if (!notification.isRead()) {
+            notification.markAsRead();
+        }
+    }
+
+    @Transactional
     public void deleteNotification(Long userId, Long notificationId) {
         User user = findActiveUser(userId);
         Notification notification = notificationRepository

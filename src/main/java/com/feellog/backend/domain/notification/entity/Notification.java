@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -61,11 +62,11 @@ public class Notification extends BaseTimeEntity {
 
     public void markAsRead() {
         this.isRead = true;
-        this.readAt = LocalDateTime.now();
+        this.readAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
     }
 
     public void softDelete() {
         this.isDeleted = true;
-        this.deletedAt = LocalDateTime.now();
+        this.deletedAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
     }
 }

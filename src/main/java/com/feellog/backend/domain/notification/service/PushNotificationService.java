@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -42,7 +43,7 @@ public class PushNotificationService {
 
     public void sendExpenseReminder() {
         List<User> activeUsers = userRepository.findAllByStatus(UserStatus.ACTIVE);
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
 
         for (User user : activeUsers) {
             boolean hasExpenseToday = !expenseRepository
