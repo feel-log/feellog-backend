@@ -20,7 +20,8 @@ public class ReportTrendUtils {
             List<MonthlyTagRankProjection> rawData,
             YearMonth baseMonth,
             String messageTemplate,
-            int trendMonths
+            int trendMonths,
+            List<Long> statOrderedIds
     ) {
         // 월별 tagId → score 맵 (최신월 index 0)
         List<Map<Long, Long>> monthlyScores = new ArrayList<>();
@@ -67,10 +68,10 @@ public class ReportTrendUtils {
         // 1개월만 1위 → 미노출
         if (consecutiveMonths <= 1) return emptyTrend();
 
-        // 태그명 수집 (당월 nameMap 기준)
+        // 태그명 수집 - stat 순서 기준으로 정렬
         Map<Long, String> currentNameMap = monthlyNames.getFirst();
-        List<String> topNames = consecutiveTopIds.stream()
-                .sorted()
+        List<String> topNames = statOrderedIds.stream()
+                .filter(consecutiveTopIds::contains)  // 연속 1위인 것만 필터
                 .map(currentNameMap::get)
                 .filter(name -> name != null && !name.isBlank())
                 .toList();

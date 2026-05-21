@@ -158,13 +158,13 @@ public class ReportService {
 
         ConsecutiveTrendDto categoryConsecutive = ReportTrendUtils.buildConsecutiveTrend(
                 categoryRankData, yearMonth,
-                "{N}개월 연속 가장 큰 지출 카테고리 {names}", TREND_MONTHS);
+                "{N}개월 연속 가장 큰 지출 카테고리 {names}", TREND_MONTHS, categoryList.stream().map(CategoryStatDto::categoryId).toList());
         ConsecutiveTrendDto emotionConsecutive = ReportTrendUtils.buildConsecutiveTrend(
                 emotionRankData, yearMonth,
-                "{N}개월 연속 많이 나타난 지출 감정 {names}", TREND_MONTHS);
+                "{N}개월 연속 많이 나타난 지출 감정 {names}", TREND_MONTHS, emotionList.stream().map(EmotionStatDto::emotionId).toList());
         ConsecutiveTrendDto situationConsecutive = ReportTrendUtils.buildConsecutiveTrend(
                 situationRankData, yearMonth,
-                "{N}개월 연속 자주 선택한 소비 상황 {names}", TREND_MONTHS);
+                "{N}개월 연속 자주 선택한 소비 상황 {names}", TREND_MONTHS, situationList.stream().map(SituationStatDto::situationTagId).toList());
 
         // 문구 생성
         CommentsDto comments = buildComments(categoryList, emotionList, situationList, prevCategoryAmounts,
