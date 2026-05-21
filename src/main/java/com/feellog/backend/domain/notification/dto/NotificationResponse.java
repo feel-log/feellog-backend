@@ -10,6 +10,7 @@ import java.time.ZoneId;
 public record NotificationResponse(
         Long notificationId,
         NotificationType type,
+        String title,
         String body,
         boolean isRead,
         OffsetDateTime createdAt,
@@ -21,6 +22,7 @@ public record NotificationResponse(
         return new NotificationResponse(
                 notification.getNotificationId(),
                 notification.getType(),
+                notification.getTitle(),
                 notification.getBody(),
                 notification.isRead(),
                 toKstOffsetDateTime(notification.getCreatedAt()),

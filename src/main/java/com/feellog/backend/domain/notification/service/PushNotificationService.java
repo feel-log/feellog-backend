@@ -54,7 +54,7 @@ public class PushNotificationService {
             }
 
             ExpenseReminderMessage message = ExpenseReminderMessage.getRandom();
-            if (!notificationDispatcher.saveIfEnabled(user, NotificationType.EXPENSE_REMINDER, message.getBody())) {
+            if (!notificationDispatcher.saveIfEnabled(user, NotificationType.EXPENSE_REMINDER, message.getTitle(), message.getBody())) {
                 continue;
             }
             sendFcm(user, message.getTitle(), message.getBody());
@@ -66,7 +66,7 @@ public class PushNotificationService {
 
         for (User user : activeUsers) {
             DailyReviewMessage message = DailyReviewMessage.getRandom();
-            if (!notificationDispatcher.saveIfEnabled(user, NotificationType.DAILY_REVIEW, message.getBody())) {
+            if (!notificationDispatcher.saveIfEnabled(user, NotificationType.DAILY_REVIEW, message.getTitle(), message.getBody())) {
                 continue;
             }
             sendFcm(user, message.getTitle(), message.getBody());

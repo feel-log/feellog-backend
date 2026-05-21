@@ -30,6 +30,10 @@ public class Notification extends BaseTimeEntity {
     @Column(name = "type", nullable = false, length = 30)
     private NotificationType type;
 
+    // 기존 레코드에는 title이 없을 수 있어 nullable. 신규 알림은 항상 채워짐.
+    @Column(name = "title", length = 255)
+    private String title;
+
     @Column(name = "body", nullable = false, length = 255)
     private String body;
 
@@ -46,16 +50,18 @@ public class Notification extends BaseTimeEntity {
     private LocalDateTime deletedAt;
 
     @Builder
-    public Notification(User user, NotificationType type, String body) {
+    public Notification(User user, NotificationType type, String title, String body) {
         this.user = user;
         this.type = type;
+        this.title = title;
         this.body = body;
     }
 
-    public static Notification of(User user, NotificationType type, String body) {
+    public static Notification of(User user, NotificationType type, String title, String body) {
         return Notification.builder()
                 .user(user)
                 .type(type)
+                .title(title)
                 .body(body)
                 .build();
     }
