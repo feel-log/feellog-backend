@@ -28,14 +28,14 @@ public class NotificationDispatcher {
 
     // 유저 단위 독립 트랜잭션. 한 유저 실패가 다른 유저 루프에 전파되지 않도록 REQUIRES_NEW.
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public boolean saveIfEnabled(User user, NotificationType type, String body) {
+    public boolean saveIfEnabled(User user, NotificationType type, String title, String body) {
         boolean enabled = notificationSettingsRepository.findByUser(user)
                 .map(NotificationSettings::isPushEnabled)
                 .orElse(false);
         if (!enabled) {
             return false;
         }
-        notificationRepository.save(Notification.of(user, type, body));
+        notificationRepository.save(Notification.of(user, type, title, body));
         return true;
     }
 }

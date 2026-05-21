@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -42,7 +43,7 @@ public class PushNotificationService {
 
     public void sendExpenseReminder() {
         List<User> activeUsers = userRepository.findAllByStatus(UserStatus.ACTIVE);
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
 
         for (User user : activeUsers) {
             boolean hasExpenseToday = !expenseRepository
@@ -53,7 +54,7 @@ public class PushNotificationService {
             }
 
             ExpenseReminderMessage message = ExpenseReminderMessage.getRandom();
-            if (!notificationDispatcher.saveIfEnabled(user, NotificationType.EXPENSE_REMINDER, message.getBody())) {
+            if (!notificationDispatcher.saveIfEnabled(user, NotificationType.EXPENSE_REMINDER, message.getTitle(), message.getBody())) {
                 continue;
             }
             sendFcm(user, message.getTitle(), message.getBody());
@@ -65,7 +66,7 @@ public class PushNotificationService {
 
         for (User user : activeUsers) {
             DailyReviewMessage message = DailyReviewMessage.getRandom();
-            if (!notificationDispatcher.saveIfEnabled(user, NotificationType.DAILY_REVIEW, message.getBody())) {
+            if (!notificationDispatcher.saveIfEnabled(user, NotificationType.DAILY_REVIEW, message.getTitle(), message.getBody())) {
                 continue;
             }
             sendFcm(user, message.getTitle(), message.getBody());
