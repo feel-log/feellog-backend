@@ -6,23 +6,23 @@ public class ReportSortUtils {
 
     private ReportSortUtils() {}
 
-    public static Sort buildSortOption(String sort) {
+    public static Sort buildSortOption(ExpenseSortType sort) {
         return switch (sort) {
-            case "OLDEST" -> Sort.by(
+            case LATEST -> Sort.by(
+                    Sort.Order.desc("expenseDate"),
+                    Sort.Order.desc("createdAt")
+            );
+            case OLDEST -> Sort.by(
                     Sort.Order.asc("expenseDate"),
                     Sort.Order.asc("createdAt")
             );
-            case "AMOUNT_HIGH" -> Sort.by(
+            case AMOUNT_HIGH -> Sort.by(
                     Sort.Order.desc("amount"),
                     Sort.Order.desc("expenseDate"),
                     Sort.Order.desc("createdAt")
             );
-            case "AMOUNT_LOW" -> Sort.by(
+            case AMOUNT_LOW -> Sort.by(
                     Sort.Order.asc("amount"),
-                    Sort.Order.desc("expenseDate"),
-                    Sort.Order.desc("createdAt")
-            );
-            default -> Sort.by(
                     Sort.Order.desc("expenseDate"),
                     Sort.Order.desc("createdAt")
             );

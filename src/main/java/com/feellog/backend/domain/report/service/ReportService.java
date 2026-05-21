@@ -26,6 +26,7 @@ import com.feellog.backend.domain.report.dto.response.SituationStatDto;
 import com.feellog.backend.domain.report.dto.response.WeeklyReportResponse;
 import com.feellog.backend.domain.report.repository.IncomeReportRepository;
 import com.feellog.backend.domain.report.repository.ReportRepository;
+import com.feellog.backend.domain.report.util.ExpenseSortType;
 import com.feellog.backend.domain.report.util.ReportSortUtils;
 import com.feellog.backend.domain.report.util.ReportTrendUtils;
 import com.feellog.backend.global.exception.BusinessException;
@@ -512,7 +513,7 @@ public class ReportService {
                 .build();
     }
 
-    public MonthlyExpenseDetailResponse getMonthlyExpenseDetail(Long userId, int year, int month, int page, int size, String sort) {
+    public MonthlyExpenseDetailResponse getMonthlyExpenseDetail(Long userId, int year, int month, int page, int size, ExpenseSortType sort) {
         validateYearMonth(year, month);
 
         Pageable pageable = PageRequest.of(page - 1, size, ReportSortUtils.buildSortOption(sort));
@@ -528,7 +529,7 @@ public class ReportService {
         List<MonthlyExpenseDetailResponse.DailyLogDto> dailyLogs = null;
         List<MonthlyExpenseDetailResponse.ExpenseDto> expenses = null;
 
-        if (sort.equals("AMOUNT_HIGH") || sort.equals("AMOUNT_LOW")) {
+        if (sort == ExpenseSortType.AMOUNT_HIGH || sort == ExpenseSortType.AMOUNT_LOW) {
             expenses = expensePage.getContent().stream()
                     .map(this::mapToMonthlyExpenseDto)
                     .toList();
@@ -587,7 +588,7 @@ public class ReportService {
                 .build();
     }
 
-    public CategoryDetailResponse getCategoryDetail(Long userId, Long categoryId, int year, int month, int page, int size, String sort) {
+    public CategoryDetailResponse getCategoryDetail(Long userId, Long categoryId, int year, int month, int page, int size, ExpenseSortType sort) {
         validateYearMonth(year, month);
 
         // 카테고리 Id 검증
@@ -610,7 +611,7 @@ public class ReportService {
         List<CategoryDetailResponse.DailyLogDto> dailyLogs = null;
         List<CategoryDetailResponse.ExpenseDto> expenses = null;
 
-        if (sort.equals("AMOUNT_HIGH") || sort.equals("AMOUNT_LOW")) {
+        if (sort == ExpenseSortType.AMOUNT_HIGH || sort == ExpenseSortType.AMOUNT_LOW) {
             expenses = expensePage.getContent().stream()
                     .map(this::mapToExpenseDto)
                     .toList();
@@ -672,7 +673,7 @@ public class ReportService {
                 .build();
     }
 
-    public EmotionDetailResponse getEmotionDetail(Long userId, Long emotionId, int year, int month, int page, int size, String sort) {
+    public EmotionDetailResponse getEmotionDetail(Long userId, Long emotionId, int year, int month, int page, int size, ExpenseSortType sort) {
         validateYearMonth(year, month);
 
         Emotion emotion = emotionRepository.findById(emotionId)
@@ -691,7 +692,7 @@ public class ReportService {
         List<EmotionDetailResponse.DailyLogDto> dailyLogs = null;
         List<EmotionDetailResponse.ExpenseDto> expenses = null;
 
-        if (sort.equals("AMOUNT_HIGH") || sort.equals("AMOUNT_LOW")) {
+        if (sort == ExpenseSortType.AMOUNT_HIGH || sort == ExpenseSortType.AMOUNT_LOW) {
             expenses = expensePage.getContent().stream()
                     .map(this::mapToEmotionExpenseDto)
                     .toList();

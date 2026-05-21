@@ -7,6 +7,7 @@ import com.feellog.backend.domain.report.dto.response.MonthlyExpenseDetailRespon
 import com.feellog.backend.domain.report.dto.response.MonthlyReportResponse;
 import com.feellog.backend.domain.report.dto.response.WeeklyReportResponse;
 import com.feellog.backend.domain.report.service.ReportService;
+import com.feellog.backend.domain.report.util.ExpenseSortType;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +60,7 @@ public class ReportController {
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "LATEST") String sort
     ) {
-        return ResponseEntity.ok(reportService.getMonthlyExpenseDetail(userId, year, month, page, size, sort));
+        return ResponseEntity.ok(reportService.getMonthlyExpenseDetail(userId, year, month, page, size, ExpenseSortType.from(sort)));
     }
 
     @GetMapping("/categories/{categoryId}/expenses")
@@ -72,7 +73,7 @@ public class ReportController {
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "LATEST") String sort
     ) {
-        return ResponseEntity.ok(reportService.getCategoryDetail(userId, categoryId, year, month, page, size, sort));
+        return ResponseEntity.ok(reportService.getCategoryDetail(userId, categoryId, year, month, page, size, ExpenseSortType.from(sort)));
     }
 
     @GetMapping("/emotions/{emotionId}/expenses")
@@ -85,6 +86,6 @@ public class ReportController {
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "LATEST") String sort
     ) {
-        return ResponseEntity.ok(reportService.getEmotionDetail(userId, emotionId, year, month, page, size, sort));
+        return ResponseEntity.ok(reportService.getEmotionDetail(userId, emotionId, year, month, page, size, ExpenseSortType.from(sort)));
     }
 }
