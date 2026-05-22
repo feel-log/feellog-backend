@@ -26,13 +26,15 @@ import com.feellog.backend.domain.report.dto.response.SituationStatDto;
 import com.feellog.backend.domain.report.dto.response.WeeklyReportResponse;
 import com.feellog.backend.domain.report.repository.IncomeReportRepository;
 import com.feellog.backend.domain.report.repository.ReportRepository;
+import com.feellog.backend.domain.report.util.ExpenseSortType;
+import com.feellog.backend.domain.report.util.ReportSortUtils;
+import com.feellog.backend.domain.report.util.ReportTrendUtils;
 import com.feellog.backend.global.exception.BusinessException;
 import com.feellog.backend.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -155,15 +157,15 @@ public class ReportService {
         List<MonthlyTagRankProjection> situationRankData =
                 reportRepository.findMonthlySituationRanks(userId, trendStart, endDate);
 
-        ConsecutiveTrendDto categoryConsecutive = buildConsecutiveTrend(
+        ConsecutiveTrendDto categoryConsecutive = ReportTrendUtils.buildConsecutiveTrend(
                 categoryRankData, yearMonth,
-                "{N}개월 연속 가장 큰 지출 카테고리 {names}");
-        ConsecutiveTrendDto emotionConsecutive = buildConsecutiveTrend(
+                "{N}개월 연속 가장 큰 지출 카테고리 {names}", TREND_MONTHS, categoryList.stream().map(CategoryStatDto::categoryId).toList());
+        ConsecutiveTrendDto emotionConsecutive = ReportTrendUtils.buildConsecutiveTrend(
                 emotionRankData, yearMonth,
-                "{N}개월 연속 많이 나타난 지출 감정 {names}");
-        ConsecutiveTrendDto situationConsecutive = buildConsecutiveTrend(
+                "{N}개월 연속 많이 나타난 지출 감정 {names}", TREND_MONTHS, emotionList.stream().map(EmotionStatDto::emotionId).toList());
+        ConsecutiveTrendDto situationConsecutive = ReportTrendUtils.buildConsecutiveTrend(
                 situationRankData, yearMonth,
-                "{N}개월 연속 자주 선택한 소비 상황 {names}");
+                "{N}개월 연속 자주 선택한 소비 상황 {names}", TREND_MONTHS, situationList.stream().map(SituationStatDto::situationTagId).toList());
 
         // 문구 생성
         CommentsDto comments = buildComments(categoryList, emotionList, situationList, prevCategoryAmounts,
@@ -511,129 +513,10 @@ public class ReportService {
                 .build();
     }
 
-    // N개월치 Projection → 연속 1위 트렌드 문구 생성
-    private ConsecutiveTrendDto buildConsecutiveTrend(
-            List<MonthlyTagRankProjection> rawData,
-            YearMonth baseMonth,
-            String messageTemplate
-    ) {
-        // 월별 tagId → score 맵 (최신월 index 0)
-        List<Map<Long, Long>> monthlyScores = new ArrayList<>();
-        List<Map<Long, String>> monthlyNames = new ArrayList<>();
-
-        for (int i = 0; i < TREND_MONTHS; i++) {
-            YearMonth ym = baseMonth.minusMonths(i);
-            Map<Long, Long> scoreMap = new LinkedHashMap<>();
-            Map<Long, String> nameMap = new LinkedHashMap<>();
-
-            rawData.stream()
-                    .filter(d -> d.getYear() == ym.getYear() && d.getMonth() == ym.getMonthValue())
-                    .forEach(d -> {
-                        scoreMap.merge(d.getTagId(), d.getScore().longValue(), Long::sum);
-                        nameMap.putIfAbsent(d.getTagId(), d.getTagName());
-                    });
-
-            monthlyScores.add(scoreMap);
-            monthlyNames.add(nameMap);
-        }
-
-        // 당월 데이터 없으면 미노출
-        if (monthlyScores.getFirst().isEmpty()) {
-            return ConsecutiveTrendDto.builder().months(0).names(List.of()).message(null).build();
-        }
-
-        // 당월 1위 tagId 집합
-        Set<Long> consecutiveTopIds = getTopIds(monthlyScores.getFirst());
-        int consecutiveMonths = 1;
-
-        for (int i = 1; i < TREND_MONTHS; i++) {
-            if (monthlyScores.get(i).isEmpty()) break;
-
-            Set<Long> prevTopIds = getTopIds(monthlyScores.get(i));
-            consecutiveTopIds.retainAll(prevTopIds); // 교집합: 연속 공동 1위만 유지
-
-            if (consecutiveTopIds.isEmpty()) break;
-            consecutiveMonths++;
-        }
-
-        // 1개월만 1위 → 미노출
-        if (consecutiveMonths <= 1) {
-            return ConsecutiveTrendDto.builder().months(0).names(List.of()).message(null).build();
-        }
-
-        // 태그명 수집 (당월 nameMap 기준)
-        Map<Long, String> currentNameMap = monthlyNames.getFirst();
-        List<String> topNames = consecutiveTopIds.stream()
-                .map(currentNameMap::get)
-                .filter(name -> name != null && !name.isBlank())
-                .sorted()
-                .toList();
-
-        String message = resolveConsecutiveMessage(messageTemplate, consecutiveMonths, topNames);
-
-        return ConsecutiveTrendDto.builder()
-                .months(consecutiveMonths)
-                .names(topNames)
-                .message(message)
-                .build();
-    }
-
-    // scoreMap에서 최고점 동률 tagId Set 반환
-    private Set<Long> getTopIds(Map<Long, Long> scoreMap) {
-        long maxScore = scoreMap.values().stream()
-                .mapToLong(Long::longValue)
-                .max()
-                .orElse(0L);
-
-        return scoreMap.entrySet().stream()
-                .filter(e -> e.getValue() == maxScore)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toSet());
-    }
-
-    // 연속 문구 포맷 처리 (공동 1위 3개 이상 시 "외 N개" 처리)
-    private String resolveConsecutiveMessage(String template, int months, List<String> names) {
-        String namesStr;
-        if (names.size() >= 3) {
-            namesStr = names.get(0) + ", " + names.get(1) + " 외 " + (names.size() - 2) + "개";
-        } else {
-            namesStr = String.join(", ", names);
-        }
-
-        return template
-                .replace("{N}", String.valueOf(months))
-                .replace("{names}", namesStr);
-    }
-
-    public MonthlyExpenseDetailResponse getMonthlyExpenseDetail(Long userId, int year, int month, int page, int size, String sort) {
+    public MonthlyExpenseDetailResponse getMonthlyExpenseDetail(Long userId, int year, int month, int page, int size, ExpenseSortType sort) {
         validateYearMonth(year, month);
 
-        Sort sortOption = switch (sort) {
-            case "OLDEST" -> Sort.by(
-                    Sort.Order.asc("expenseDate"),
-                    Sort.Order.asc("expenseTime").nullsLast(),
-                    Sort.Order.asc("createdAt")
-            );
-            case "AMOUNT_HIGH" -> Sort.by(
-                    Sort.Order.desc("amount"),
-                    Sort.Order.desc("expenseDate"),
-                    Sort.Order.desc("expenseTime").nullsLast(),
-                    Sort.Order.desc("createdAt")
-            );
-            case "AMOUNT_LOW" -> Sort.by(
-                    Sort.Order.asc("amount"),
-                    Sort.Order.desc("expenseDate"),
-                    Sort.Order.desc("expenseTime").nullsLast(),
-                    Sort.Order.desc("createdAt")
-            );
-            default -> Sort.by(
-                    Sort.Order.desc("expenseDate"),
-                    Sort.Order.desc("expenseTime").nullsLast(),
-                    Sort.Order.desc("createdAt")
-            );
-        };
-
-        Pageable pageable = PageRequest.of(page - 1, size, sortOption);
+        Pageable pageable = PageRequest.of(page - 1, size, ReportSortUtils.buildSortOption(sort));
 
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate startDate = yearMonth.atDay(1);
@@ -646,7 +529,7 @@ public class ReportService {
         List<MonthlyExpenseDetailResponse.DailyLogDto> dailyLogs = null;
         List<MonthlyExpenseDetailResponse.ExpenseDto> expenses = null;
 
-        if (sort.equals("AMOUNT_HIGH") || sort.equals("AMOUNT_LOW")) {
+        if (sort == ExpenseSortType.AMOUNT_HIGH || sort == ExpenseSortType.AMOUNT_LOW) {
             expenses = expensePage.getContent().stream()
                     .map(this::mapToMonthlyExpenseDto)
                     .toList();
@@ -705,39 +588,14 @@ public class ReportService {
                 .build();
     }
 
-    public CategoryDetailResponse getCategoryDetail(Long userId, Long categoryId, int year, int month, int page, int size, String sort) {
+    public CategoryDetailResponse getCategoryDetail(Long userId, Long categoryId, int year, int month, int page, int size, ExpenseSortType sort) {
         validateYearMonth(year, month);
 
         // 카테고리 Id 검증
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
 
-        Sort sortOption = switch (sort) {
-            case "OLDEST" -> Sort.by(
-                    Sort.Order.asc("expenseDate"),
-                    Sort.Order.asc("expenseTime").nullsLast(),
-                    Sort.Order.asc("createdAt")
-            );
-            case "AMOUNT_HIGH" -> Sort.by(
-                    Sort.Order.desc("amount"),
-                    Sort.Order.desc("expenseDate"),
-                    Sort.Order.desc("expenseTime").nullsLast(),
-                    Sort.Order.desc("createdAt")
-            );
-            case "AMOUNT_LOW" -> Sort.by(
-                    Sort.Order.asc("amount"),
-                    Sort.Order.desc("expenseDate"),
-                    Sort.Order.desc("expenseTime").nullsLast(),
-                    Sort.Order.desc("createdAt")
-            );
-            default -> Sort.by(
-                    Sort.Order.desc("expenseDate"),
-                    Sort.Order.desc("expenseTime").nullsLast(),
-                    Sort.Order.desc("createdAt")
-            );
-        };
-
-        Pageable pageable = PageRequest.of(page - 1, size, sortOption);
+        Pageable pageable = PageRequest.of(page - 1, size, ReportSortUtils.buildSortOption(sort));
 
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate startDate = yearMonth.atDay(1);
@@ -753,7 +611,7 @@ public class ReportService {
         List<CategoryDetailResponse.DailyLogDto> dailyLogs = null;
         List<CategoryDetailResponse.ExpenseDto> expenses = null;
 
-        if (sort.equals("AMOUNT_HIGH") || sort.equals("AMOUNT_LOW")) {
+        if (sort == ExpenseSortType.AMOUNT_HIGH || sort == ExpenseSortType.AMOUNT_LOW) {
             expenses = expensePage.getContent().stream()
                     .map(this::mapToExpenseDto)
                     .toList();
@@ -815,38 +673,13 @@ public class ReportService {
                 .build();
     }
 
-    public EmotionDetailResponse getEmotionDetail(Long userId, Long emotionId, int year, int month, int page, int size, String sort) {
+    public EmotionDetailResponse getEmotionDetail(Long userId, Long emotionId, int year, int month, int page, int size, ExpenseSortType sort) {
         validateYearMonth(year, month);
 
         Emotion emotion = emotionRepository.findById(emotionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EMOTION_NOT_FOUND));
 
-        Sort sortOption = switch (sort) {
-            case "OLDEST" -> Sort.by(
-                    Sort.Order.asc("expenseDate"),
-                    Sort.Order.asc("expenseTime").nullsLast(),
-                    Sort.Order.asc("createdAt")
-            );
-            case "AMOUNT_HIGH" -> Sort.by(
-                    Sort.Order.desc("amount"),
-                    Sort.Order.desc("expenseDate"),
-                    Sort.Order.desc("expenseTime").nullsLast(),
-                    Sort.Order.desc("createdAt")
-            );
-            case "AMOUNT_LOW" -> Sort.by(
-                    Sort.Order.asc("amount"),
-                    Sort.Order.desc("expenseDate"),
-                    Sort.Order.desc("expenseTime").nullsLast(),
-                    Sort.Order.desc("createdAt")
-            );
-            default -> Sort.by(
-                    Sort.Order.desc("expenseDate"),
-                    Sort.Order.desc("expenseTime").nullsLast(),
-                    Sort.Order.desc("createdAt")
-            );
-        };
-
-        Pageable pageable = PageRequest.of(page - 1, size, sortOption);
+        Pageable pageable = PageRequest.of(page - 1, size, ReportSortUtils.buildSortOption(sort));
 
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate startDate = yearMonth.atDay(1);
@@ -859,7 +692,7 @@ public class ReportService {
         List<EmotionDetailResponse.DailyLogDto> dailyLogs = null;
         List<EmotionDetailResponse.ExpenseDto> expenses = null;
 
-        if (sort.equals("AMOUNT_HIGH") || sort.equals("AMOUNT_LOW")) {
+        if (sort == ExpenseSortType.AMOUNT_HIGH || sort == ExpenseSortType.AMOUNT_LOW) {
             expenses = expensePage.getContent().stream()
                     .map(this::mapToEmotionExpenseDto)
                     .toList();
