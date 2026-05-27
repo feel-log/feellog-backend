@@ -4,6 +4,7 @@ package com.feellog.backend.domain.expense.controller;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,89 +31,90 @@ public class ExpenseController {
 	
 	// expense 생성
 	@PostMapping
-	public Map<String, Object> createExpense(@RequestBody ExpenseRequestDto dto,
-											 @AuthenticationPrincipal Long userId) {
-		//System.out.println("#####################################################################");
-		//System.out.println(dto.getUserId());
-		//System.out.println(dto.getCategoryId());
-		//System.out.println(dto.getAmount());
-		//System.out.println(dto.getMemo());
-		//System.out.println(dto.getMerchantName());
-		//System.out.println(dto.getExpenseDate());
-		//System.out.println(dto.getExpenseTime());
+	public ResponseEntity<Map<String, Object>> createExpense(@RequestBody ExpenseRequestDto dto,
+											 				 @AuthenticationPrincipal Long userId) {
 		
 		dto.setUserId(userId);
-		//System.out.println("Authenticated User ID from Token: " + userId);
-
 		Long expenseId = expenseService.createExpense(dto, userId);
 		
-		return Map.of(
+		return ResponseEntity.status(HttpStatus.CREATED).body(
+				Map.of(
 				"message", "지출 생성 완료",
 				"expenseId", expenseId
+				)
 		);
 	}
 	
 	// expense 조회
 	@GetMapping("/{expenseId}")
-	public ExpenseResponseDto getExpense(@PathVariable("expenseId") Long expenseId,
+	public ResponseEntity<ExpenseResponseDto> getExpense(@PathVariable("expenseId") Long expenseId,
 										 @AuthenticationPrincipal Long userId) {
-	    return expenseService.getExpense(expenseId, userId);
+		ExpenseResponseDto response = expenseService.getExpense(expenseId, userId);
+		
+		return ResponseEntity.ok(response);
 	}
 	
 	@GetMapping("/daily")
-	public List<ExpenseResponseDto> getDailyExpenses(
+	public ResponseEntity<List<ExpenseResponseDto>> getDailyExpenses(
 			@RequestParam("year") int year, @RequestParam("month") int month, @RequestParam("day") int day,
 			@AuthenticationPrincipal Long userId) 
 	{
-		return expenseService.getDailyExpenses(year, month, day, userId);
+		List<ExpenseResponseDto> responses = expenseService.getDailyExpenses(year, month, day, userId);
+		
+		return ResponseEntity.ok(responses);
 	}
 	
 	@GetMapping("/monthly")
-	public List<ExpenseResponseDto> getMonthlyExpenses(
+	public ResponseEntity<List<ExpenseResponseDto>> getMonthlyExpenses(
 			@RequestParam("year") int year, @RequestParam("month") int month,
 			@AuthenticationPrincipal Long userId) 
 	{
-		return expenseService.getMonthlyExpenses(year, month, userId);
+		List<ExpenseResponseDto> responses = expenseService.getMonthlyExpenses(year, month, userId);
+		return ResponseEntity.ok(responses);
 	}
-	
 
 	@GetMapping("/category/{categoryId}")
-	public List<ExpenseResponseDto> getByCategory(@PathVariable("categoryId") Long categoryId,
-												  @AuthenticationPrincipal Long userId) {
-		return expenseService.getByCategory(categoryId, userId);
+	public ResponseEntity<List<ExpenseResponseDto>> getByCategory(@PathVariable("categoryId") Long categoryId,
+												  				  @AuthenticationPrincipal Long userId) {
+		List<ExpenseResponseDto> responses = expenseService.getByCategory(categoryId, userId);
+		return ResponseEntity.ok(responses);
 	}
 	
 	@GetMapping("/category_group/{groupId}")
-	public List<ExpenseResponseDto> getByCategoryGroup(@PathVariable("groupId") Long groupId,
-													   @AuthenticationPrincipal Long userId) {
-		return expenseService.getExpensesByCategoryGroup(groupId, userId);
+	public ResponseEntity<List<ExpenseResponseDto>> getByCategoryGroup(@PathVariable("groupId") Long groupId,
+													   				   @AuthenticationPrincipal Long userId) {
+		List<ExpenseResponseDto> responses = expenseService.getExpensesByCategoryGroup(groupId, userId);
+		return ResponseEntity.ok(responses);
 	}
 	
 	@GetMapping("/emotion/{emotionId}")
-	public List<ExpenseResponseDto> getByEmotion(@PathVariable("emotionId") Long emotionId,
+	public ResponseEntity<List<ExpenseResponseDto>> getByEmotion(@PathVariable("emotionId") Long emotionId,
 			     								 @AuthenticationPrincipal Long userId) {
-		return expenseService.getByEmotion(emotionId, userId);
+		List<ExpenseResponseDto> responses = expenseService.getByEmotion(emotionId, userId);
+		return ResponseEntity.ok(responses);
 	}
 	
 	@GetMapping("/emotion_group/{groupId}")
-	public List<ExpenseResponseDto> getByEmotionGroup(@PathVariable("groupId") Long groupId,
+	public ResponseEntity<List<ExpenseResponseDto>> getByEmotionGroup(@PathVariable("groupId") Long groupId,
 			                                          @AuthenticationPrincipal Long userId) {
-		return expenseService.getExpensesByEmotionGroup(groupId, userId);
+		List<ExpenseResponseDto> responses = expenseService.getExpensesByEmotionGroup(groupId, userId);
+		return ResponseEntity.ok(responses);
 	}
 	
 	@GetMapping("/situation_tag/{situationTagId}")
-	public List<ExpenseResponseDto> getBySituation(@PathVariable("situationTagId") Long situationTagId,
+	public ResponseEntity<List<ExpenseResponseDto>> getBySituation(@PathVariable("situationTagId") Long situationTagId,
 			                                       @AuthenticationPrincipal Long userId) {
-		return expenseService.getBySituationTag(situationTagId, userId);
+		List<ExpenseResponseDto> responses = expenseService.getBySituationTag(situationTagId, userId);
+		return ResponseEntity.ok(responses);
 	}
 	
 	// expense 수정
 	@PutMapping("/{expenseId}")
-	public Map<String, Object> updateExpense(@PathVariable("expenseId") Long expenseId, 
+	public ResponseEntity<Map<String, Object>> updateExpense(@PathVariable("expenseId") Long expenseId, 
 			                                 @RequestBody ExpenseRequestDto dto,
 			                                 @AuthenticationPrincipal Long userId) {
 		expenseService.updateExpense(expenseId, dto, userId);
-		return Map.of("message", "지출 수정 완료");
+		return ResponseEntity.ok(Map.of("message", "지출 수정 완료"));
 	}
 	
 	// expense 삭제
