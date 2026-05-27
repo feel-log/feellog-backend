@@ -3,6 +3,7 @@ package com.feellog.backend.domain.income.controller;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,60 +31,70 @@ public class IncomeController {
 	
 	// income 생성
 	@PostMapping
-	public Map<String, Object> createIncome(@RequestBody IncomeRequestDto dto, 
+	public ResponseEntity<Map<String, Object>> createIncome(@RequestBody IncomeRequestDto dto, 
 											@AuthenticationPrincipal Long userId) {
 		dto.setUserId(userId);
 		Long incomeId = incomeService.createIncome(dto, userId);
 		
-		return Map.of(
+		return ResponseEntity.status(HttpStatus.CREATED)
+				.body(Map.of(
 				"message", "수입 생성 완료", 
 				"IncomeId", incomeId
+				)
 		);
 	}
 	
 	// income 조회
 	@GetMapping("/{incomeId}")
-	public IncomeResponseDto getIncome(@PathVariable("incomeId") Long incomeId,
+	public ResponseEntity<IncomeResponseDto> getIncome(@PathVariable("incomeId") Long incomeId,
 									   @AuthenticationPrincipal Long userId) {
-		return incomeService.getIncome(incomeId,  userId);
+		IncomeResponseDto response = incomeService.getIncome(incomeId,  userId);
+		return ResponseEntity.ok(response);
 	}
 	
 	@GetMapping("/daily")
-	public List<IncomeResponseDto> getDailyIncome(
+	public ResponseEntity<List<IncomeResponseDto>> getDailyIncome(
 			@RequestParam("year") int year, @RequestParam("month") int month, @RequestParam("day") int day,
 			@AuthenticationPrincipal Long userId) {
-		return incomeService.getDailyIncomes(year, month, day, userId);
+		
+		List<IncomeResponseDto> response = incomeService.getDailyIncomes(year, month, day, userId);
+		return ResponseEntity.ok(response);
 	}
 	
 	@GetMapping("/monthly")
-	public List<IncomeResponseDto> getMonthlyIncome(
+	public ResponseEntity<List<IncomeResponseDto>> getMonthlyIncome(
 			@RequestParam("year") int year, @RequestParam("month") int month,
 			 @AuthenticationPrincipal Long userId) {
-		return incomeService.getMonthlyIncomes(year, month, userId);
+		
+		List<IncomeResponseDto> responses = incomeService.getMonthlyIncomes(year, month, userId);
+		return ResponseEntity.ok(responses);
 	}
 	
 	@GetMapping("/category/{categoryId}")
-	public List<IncomeResponseDto> getByCategory(@PathVariable("categoryId") Long categoryId,
+	public ResponseEntity<List<IncomeResponseDto>> getByCategory(@PathVariable("categoryId") Long categoryId,
 												  @AuthenticationPrincipal Long userId) {
-		return incomeService.getByCategory(categoryId, userId);
+		
+		List<IncomeResponseDto> responses = incomeService.getByCategory(categoryId, userId);
+		return ResponseEntity.ok(responses);
 	}
 	
 	// income 수정
 	@PutMapping("/{incomeId}")
-	public Map<String, Object> updateIncome(
+	public ResponseEntity<Map<String, Object>> updateIncome(
 			@PathVariable("incomeId") Long incomeId, @RequestBody IncomeRequestDto dto,
 			@AuthenticationPrincipal Long userId) {
+		
 		incomeService.updateIncome(incomeId,  dto,  userId);
-		return Map.of("message", "수입 수정 완료");
+		return ResponseEntity.ok(Map.of("message", "수입 수정 완료"));
 	}
 	
 	// income 삭제
 	@DeleteMapping("/{incomeId}")
-	public ResponseEntity<?> deleteIncome(
+	public ResponseEntity<Map<String, Object>> deleteIncome(
 			@PathVariable("incomeId") Long incomeId,
 			@AuthenticationPrincipal Long userId) {
-		incomeService.deleteIncome(incomeId, userId);
 		
+		incomeService.deleteIncome(incomeId, userId);
 		return ResponseEntity.ok(Map.of("message", "수입 삭제 완료"));
 	}
 	
